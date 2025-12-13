@@ -1,0 +1,221 @@
+\documentclass[a4paper,11pt]{article}
+
+% --------------------
+% Pakete
+% --------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+
+% --------------------
+% Code-Style
+% --------------------
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray}
+}
+
+% --------------------
+% Dokument
+% --------------------
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Large Modul M323 – Funktionales Programmieren\par}
+    \vspace{1cm}
+    {\Huge\bfseries Bank Marketing Data – Kundenanalyse \& Abschlussprognose\par}
+    \vspace{1.5cm}
+
+    {\large Projekt-Dokumentation\par}
+    \vspace{2cm}
+
+    \begin{tabular}{ll}
+        Autoren: & Peter Ngo, Alex Uscata \\
+        Klasse : & INA 23A \\
+        Dozent: & Dieter Kopp \\
+        Datum: & \today
+    \end{tabular}
+
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ======================================================
+\section{Einleitung}
+
+Im Rahmen des Moduls M323 – Funktionales Programmieren wird in diesem Projekt
+eine Datenanalyse einer Bank-Marketingkampagne umgesetzt.
+Ziel ist es, eine imperativ geschriebene Lösung mit einer funktional
+refaktorierten Version zu vergleichen und die Vor- sowie Nachteile
+funktionaler Sprachelemente praxisnah zu evaluieren.
+
+Als Datengrundlage dient ein realitätsnaher Datensatz einer portugiesischen
+Bank, welcher Kundendaten sowie den Erfolg einer Marketingkampagne enthält.
+Beide Programmversionen erzeugen denselben Output, unterscheiden sich jedoch
+grundlegend in der Programmierweise.
+
+% ======================================================
+\section{Wahl der imperativen Programmiersprache}
+
+\subsection{Begründung der Sprachwahl}
+
+Für dieses Projekt wurde die Programmiersprache \textbf{Python} gewählt.
+Python eignet sich besonders gut für Datenanalysen, da die Sprache:
+
+\begin{itemize}
+    \item leicht lesbar und verständlich ist
+    \item imperative Programmierung vollständig unterstützt
+    \item funktionale Sprachelemente integriert anbietet
+    \item häufig im beruflichen Umfeld eingesetzt wird
+\end{itemize}
+
+Da Python sowohl imperative als auch funktionale Konzepte vereint, ist die
+Sprache ideal geeignet, um beide Programmierparadigmen direkt miteinander
+zu vergleichen.
+
+\subsection{Unterstützte funktionale Elemente in Python}
+
+Python ist keine rein funktionale Sprache, bietet jedoch zahlreiche
+funktionale Sprachelemente aus der Standardbibliothek:
+
+\begin{itemize}
+    \item \texttt{map()} – Transformation von Daten
+    \item \texttt{filter()} – Selektion von Elementen
+    \item \texttt{reduce()} (aus \texttt{functools}) – Aggregation
+    \item Lambda-Funktionen
+    \item List Comprehensions
+    \item Unveränderliche Datentypen (z.\,B. Tupel)
+\end{itemize}
+
+Diese Elemente ermöglichen eine deklarative und kompakte Beschreibung
+von Datenverarbeitungslogik.
+
+% ======================================================
+\section{Projektantrag}
+
+\subsection{Ausgangslage}
+
+Während einer Marketingkampagne hat eine Bank verschiedene Kundendaten
+erfasst. Der Datensatz liegt in Form einer CSV-Datei vor und ist nicht
+direkt für Analysen aufbereitet.
+
+Ziel ist es, relevante Kennzahlen zu berechnen, Kundengruppen zu vergleichen
+und statistische Zusammenhänge zu untersuchen.
+
+\subsection{Zielsetzung}
+
+Das Projekt verfolgt folgende Ziele:
+
+\begin{itemize}
+    \item Analyse der Erfolgsquote der Marketingkampagne
+    \item Vergleich verschiedener Kundengruppen
+    \item Umsetzung einer imperativen Version (V1.0)
+    \item Refactoring in eine funktionale Version (V2.0)
+    \item Vergleich beider Ansätze hinsichtlich Lesbarkeit und Wartbarkeit
+\end{itemize}
+
+\subsection{Projektumfang}
+
+Das Projekt umfasst:
+
+\begin{itemize}
+    \item Einlesen und Verarbeiten eines CSV-Datensatzes
+    \item Textbasierte Konsolenausgabe
+    \item Keine externen Bibliotheken
+    \item Umsetzung in Python und Jupyter Notebook
+\end{itemize}
+
+% ======================================================
+\section{Programmausgabe}
+
+Beide Versionen des Programms erzeugen denselben Output.
+Die Ausgabe erfolgt textbasiert in der Konsole.
+
+\subsection{Beispielhafter Output}
+
+\begin{lstlisting}
+===========================
+Bankkampagne – Erfolgsquote
+
+Anzahl Kunden: 4521
+Abschlüsse (yes): 512
+Erfolgsquote: 11.3 %
+
+===========================
+Vergleich nach Education
+
+primary   | Ø Balance: 850  | Erfolgsquote: 8.5 %
+secondary | Ø Balance: 1200 | Erfolgsquote: 10.1 %
+tertiary  | Ø Balance: 1800 | Erfolgsquote: 14.3 %
+
+ANOVA F-Wert: 5.21
+\end{lstlisting}
+
+\textit{Hinweis:} Version 1.0 (imperativ) und Version 2.0 (funktional)
+liefern identische Resultate.
+
+% ======================================================
+\section{Fazit}
+
+\subsection{Nutzen funktionaler Elemente}
+
+Der Einsatz funktionaler Sprachelemente hat in diesem Projekt mehrere
+Vorteile gebracht. Insbesondere Filter- und Transformationsoperationen
+konnten kompakter und klarer formuliert werden.
+
+\subsection{Vereinfachung durch Refactoring}
+
+Im Vergleich zur imperativen Version reduzierte sich die Code-Länge
+in Version 2.0 deutlich. Verschachtelte Schleifen und Hilfsvariablen
+konnten durch deklarative Ausdrücke ersetzt werden.
+Dies führte zu besserer Lesbarkeit und weniger Fehleranfälligkeit.
+
+\subsection{Wiederverwendung funktionaler Konzepte}
+
+Die funktionalen Konzepte würden in zukünftigen Projekten erneut
+eingesetzt werden, insbesondere bei:
+
+\begin{itemize}
+    \item Datenfiltern
+    \item Aggregationen
+    \item Transformationen von Listen und Datensätzen
+\end{itemize}
+
+\subsection{Anwendungsfälle im beruflichen Umfeld}
+
+Im betrieblichen Kontext eignen sich funktionale Sprachelemente besonders
+für:
+
+\begin{itemize}
+    \item Datenanalyse
+    \item Reporting
+    \item Verarbeitung von Log- oder Kundendaten
+    \item Automatisierte Auswertungen
+\end{itemize}
+
+Zusammenfassend lässt sich sagen, dass funktionale Programmieransätze
+eine sinnvolle Ergänzung zur imperativen Programmierung darstellen und
+in vielen Anwendungsfällen zu einer klareren und effizienteren Lösung führen.
+
+\end{document}
