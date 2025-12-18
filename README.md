@@ -235,7 +235,6 @@ Nach der Aktivierung ist die Umgebung am Shell-Prefix erkennbar, z. B.:
 ```
 
 ---
-
 ## Output (Beispiel)
 
 Die Applikation gibt die Resultate als formatierten Text auf der Konsole aus.
@@ -262,7 +261,21 @@ ANOVA F-Wert: 5.21
 ```
 
 ---
+## Dokumentation (Overleaf)
 
+Die Projektdokumentation wird separat in **LaTeX** auf **Overleaf** erstellt.  
+Overleaf ermöglicht eine kollaborative Bearbeitung der Dokumentation im Team sowie eine konsistente und reproduzierbare PDF-Erstellung.
+
+Die Dokumentation umfasst unter anderem:
+- Projektantrag
+- Beschreibung der Datengrundlage und Produktfunktionen
+- Vergleich der imperativen und funktionalen Umsetzung
+- Beispiel-Outputs
+- Fazit und Reflexion
+
+Der Code und die Dokumentation werden bewusst getrennt geführt, um eine klare Struktur zwischen Implementierung und schriftlicher Ausarbeitung sicherzustellen.
+
+---
 ## Hinweise
 
 - Version 1.0 und Version 2.0 erzeugen denselben Output
