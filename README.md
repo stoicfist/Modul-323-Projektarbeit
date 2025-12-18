@@ -200,6 +200,40 @@ nbstripout --install
 
 Hinweis: Das setzt Git-Filter lokal; jedes Teammitglied sollte das einmal ausführen.
 
+#### Optional: Gentoo / virtualenvwrapper
+
+Dieser Abschnitt beschreibt **eine mögliche lokale Entwicklungsumgebung** (z. B. auf Gentoo Linux) und ist **optional**.
+Das Projekt ist **nicht** auf Gentoo beschränkt — nutze alternativ die `.venv`-Variante oben (Windows/Ubuntu/Manjaro).
+
+Beispiel mit `virtualenvwrapper`:
+
+1. `virtualenvwrapper` installieren (Gentoo):
+
+```bash
+sudo emerge --ask dev-python/virtualenvwrapper
+```
+
+2. Virtuelle Umgebung erstellen & aktivieren (Name frei wählbar):
+
+```bash
+mkvirtualenv m323-jupyter
+workon m323-jupyter
+```
+
+3. Projekt-Abhängigkeiten installieren:
+
+```bash
+cd /path/to/Modul-323-Projektarbeit
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Nach der Aktivierung ist die Umgebung am Shell-Prefix erkennbar, z. B.:
+
+```bash
+(m323-jupyter) $
+```
+
 ---
 
 ## Output (Beispiel)
