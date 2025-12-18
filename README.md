@@ -88,6 +88,30 @@ Die Projektdokumentation wird vollständig in **LaTeX (Overleaf)** erstellt, um 
 
 ---
 
+## Entwicklungsumgebung – Eigener Arbeitsplatz (Linux)
+
+Die Entwicklung des Projekts erfolgt auf meinem persönlichen Arbeitsplatz unter **Gentoo Linux**.  
+Zur sauberen Trennung von Abhängigkeiten und zur Sicherstellung einer reproduzierbaren Umgebung wird eine virtuelle Python-Umgebung mit **virtualenvwrapper** verwendet.
+
+### Betriebssystem
+- Gentoo Linux
+
+### Python-Umgebung
+- Python-Version: Python 3.13.5 (virtuelle Umgebung mit virtualenvwrapper)
+- Virtuelle Umgebung verwaltet mit `virtualenvwrapper`
+- Aktivierung der Umgebung über den Befehl `workon`
+
+Beispiel:
+```bash
+workon jupyter
+````
+Nach der Aktivierung ist die virtuelle Umgebung aktiv, erkennbar am Präfix:
+```bash
+(jupyter) $
+```
+
+---
+
 ## Output (Beispiel)
 
 Die Applikation gibt die Resultate als formatierten Text auf der Konsole aus.
