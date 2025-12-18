@@ -5,6 +5,7 @@
 Dieses Projekt analysiert einen Bank-Marketing-Datensatz aus Portugal. Ziel ist es, Kundendaten aus einer Marketingkampagne auszuwerten, um Erfolgsquoten zu berechnen, Kundengruppen zu vergleichen und statistische Zusammenhänge zu untersuchen.
 
 Das Projekt wird im Rahmen des Moduls **M323 – Funktionales Programmieren** umgesetzt und besteht aus zwei Versionen:
+
 - **Version 1.0:** Imperative Umsetzung
 - **Version 2.0:** Funktional refactored (map, filter, reduce)
 
@@ -23,22 +24,22 @@ Das Programm analysiert diese Daten und bereitet sie verständlich auf, sodass T
 
 ### Hauptdimensionen des Datensatzes
 
-1. **Demografie:** Alter (`age`), Bildungsstand (`education`), Familienstand (`marital`)  
-2. **Finanzen:** Kontostand (`balance`)  
-3. **Gesprächsdauer:** Dauer des letzten Telefonkontakts (`duration`)  
+1. **Demografie:** Alter (`age`), Bildungsstand (`education`), Familienstand (`marital`)
+2. **Finanzen:** Kontostand (`balance`)
+3. **Gesprächsdauer:** Dauer des letzten Telefonkontakts (`duration`)
 4. **Ergebnisvariable:** Produktabschluss (`complete`)
 
 ### Verwendete Variablen
 
-- `age` (numerisch)  
-- `job` (kategorisch)  
-- `marital` (kategorisch)  
-- `education` (kategorisch)  
-- `balance` (numerisch)  
-- `housing` (binär)  
-- `loan` (binär)  
-- `duration` (numerisch)  
-- `pdays` (numerisch)  
+- `age` (numerisch)
+- `job` (kategorisch)
+- `marital` (kategorisch)
+- `education` (kategorisch)
+- `balance` (numerisch)
+- `housing` (binär)
+- `loan` (binär)
+- `duration` (numerisch)
+- `pdays` (numerisch)
 - `complete` (binär, Zielvariable)
 
 Der Datensatz besitzt mehrere Dimensionen und eignet sich sehr gut für Filter-, Transformations- und Reduktionsoperationen.
@@ -88,11 +89,125 @@ Die Projektdokumentation wird vollständig in **LaTeX (Overleaf)** erstellt, um 
 
 ---
 
+## Jupyter + Git in VS Code (Empfehlung)
+
+Damit ihr Notebooks sauber versionieren könnt, ist wichtig:
+
+- Virtuelle Umgebungen und Cache-Dateien **nicht** committen (ist über `.gitignore` bereits abgedeckt).
+- Abhängigkeiten **festhalten** (hier: `requirements.txt`).
+- Notebook-Outputs möglichst **nicht** als „Rauschen“ im Git-Review lassen (siehe optional unten).
+
+### 1) VS Code Extensions
+
+- Installiere die Extensions **Python** (ms-python.python) und **Jupyter** (ms-toolsai.jupyter).
+
+### 2) Setup: Virtuelle Umgebung + Kernel
+
+#### Windows (PowerShell)
+
+Python installieren (falls noch nicht vorhanden):
+
+```powershell
+winget install -e --id Python.Python.3.12
+```
+
+Projekt-Umgebung erstellen:
+
+```powershell
+cd c:\GIT\Modul-323-Projektarbeit
+
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Falls `python` den Microsoft Store öffnet oder "Python was not found" erscheint: VS Code/Terminal neu starten und optional in Windows die **App execution aliases** für `python.exe`/`python3.exe` deaktivieren.
+
+#### Ubuntu (bash)
+
+Python + venv installieren:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip
+```
+
+Projekt-Umgebung erstellen:
+
+```bash
+cd /path/to/Modul-323-Projektarbeit
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+#### Manjaro (bash)
+
+Python installieren:
+
+```bash
+sudo pacman -Syu --needed python python-pip
+```
+
+Projekt-Umgebung erstellen:
+
+```bash
+cd /path/to/Modul-323-Projektarbeit
+
+python -m venv .venv
+source .venv/bin/activate
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Dann in VS Code:
+
+- `Ctrl+Shift+P` → **Python: Select Interpreter** → `.venv` wählen.
+- Notebook öffnen/erstellen (`.ipynb`) → oben rechts **Select Kernel** → den `.venv`-Kernel wählen.
+
+### 3) Notebook-Struktur (praktisch)
+
+- Daten bleiben in `data/` (wie jetzt).
+- Notebooks z. B. in `notebooks/` ablegen (Ordner optional).
+
+### 4) Optional: Saubere Git-Diffs für Notebooks
+
+Notebooks sind JSON-Dateien; Git-Diffs werden schnell unübersichtlich, besonders wenn Outputs mit-committed werden.
+
+Option A (Team-freundlich): **Outputs vor dem Commit löschen**
+
+- In VS Code: `Kernel` → **Clear All Outputs**.
+
+Option B (automatisch): **nbstripout** (entfernt Outputs beim Commit)
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install nbstripout
+nbstripout --install
+```
+
+```bash
+source .venv/bin/activate
+python -m pip install nbstripout
+nbstripout --install
+```
+
+Hinweis: Das setzt Git-Filter lokal; jedes Teammitglied sollte das einmal ausführen.
+
+---
+
 ## Output (Beispiel)
 
 Die Applikation gibt die Resultate als formatierten Text auf der Konsole aus.
 
 ### Beispielhafter Konsolen-Output
+
 ```
 ===========================
 Bankkampagne – Erfolgsquote
@@ -116,6 +231,6 @@ ANOVA F-Wert: 5.21
 
 ## Hinweise
 
-- Version 1.0 und Version 2.0 erzeugen denselben Output  
-- Der Fokus liegt auf dem Vergleich imperativer und funktionaler Programmieransätze  
+- Version 1.0 und Version 2.0 erzeugen denselben Output
+- Der Fokus liegt auf dem Vergleich imperativer und funktionaler Programmieransätze
 - Das Projekt ist für Partnerarbeit konzipiert

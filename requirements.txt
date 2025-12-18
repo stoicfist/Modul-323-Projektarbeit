@@ -1,0 +1,2 @@
+# Minimal dependencies to run notebooks in VS Code
+ipykernel>=6
