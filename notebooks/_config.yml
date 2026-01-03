@@ -1,0 +1,5 @@
+title: "Bank Marketing Data – Kundenanalyse & Abschlussprognose"
+author: "Uscata Alex, Ngo Peter"
+only_build_toc_files: true
+execute:
+  execute_notebooks: auto

@@ -1,0 +1,6 @@
+format: jb-book
+root: intro
+chapters:
+  - file: 01_start
+  - file: 02_imperative_play
+  - file: 03_functional_play
