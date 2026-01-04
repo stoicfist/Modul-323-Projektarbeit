@@ -14,21 +14,46 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,     % interne Links (Inhaltsverzeichnis etc.)
+  urlcolor=blue,      % URLs
+  citecolor=blue      % Literaturzitate (falls du später welche hast)
+}
 
 \geometry{margin=2.5cm}
 \onehalfspacing
+
+% --- Darkmode Farben für Code ---
+\definecolor{codebg}{HTML}{0B0F14}      % sehr dunkles Blau-Schwarz
+\definecolor{codefg}{HTML}{E6D5B8}      % beige
+\definecolor{codekw}{HTML}{7AA2F7}      % blau (Keywords)
+\definecolor{codestr}{HTML}{E0AF68}     % orange/beige (Strings)
+\definecolor{codecom}{HTML}{7F8C8D}     % grau (Kommentare)
+\definecolor{codenum}{HTML}{56687A}     % grau-blau (Zeilennummern)
+\definecolor{codeframe}{HTML}{1F2A37}   % Rahmen
 
 % --------------------
 % Code-Style
 % --------------------
 \lstset{
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    frame=single,
-    numbers=left,
-    numberstyle=\tiny,
-    keywordstyle=\color{blue},
-    commentstyle=\color{gray}
+  language=Python,
+  basicstyle=\ttfamily\small\color{codefg},
+  backgroundcolor=\color{codebg},
+  keywordstyle=\bfseries\color{codekw},
+  stringstyle=\color{codestr},
+  commentstyle=\itshape\color{codecom},
+  numbers=left,
+  numberstyle=\tiny\color{codenum},
+  stepnumber=1,
+  numbersep=8pt,
+  frame=single,
+  rulecolor=\color{codeframe},
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  tabsize=4,
+  keepspaces=true
 }
 
 % --------------------
@@ -111,6 +136,21 @@ funktionale Sprachelemente aus der Standardbibliothek:
 Diese Elemente ermöglichen eine deklarative und kompakte Beschreibung
 von Datenverarbeitungslogik.
 
+\subsubsection{Kurzbeispiele der funktionalen Elemente}
+
+\begin{lstlisting}[language=Python]
+# map: Transformation
+list(map(lambda x: x*x, [1,2,3]))      # -> [1,4,9]
+
+# filter: Selektion
+list(filter(lambda x: x > 2, [1,2,3])) # -> [3]
+
+# reduce: Aggregation
+from functools import reduce
+reduce(lambda acc, x: acc + x, [1,2,3], 0)  # -> 6
+\end{lstlisting}
+
+
 % ======================================================
 \section{Projektantrag}
 
@@ -143,7 +183,7 @@ Das Projekt umfasst:
     \item Einlesen und Verarbeiten eines CSV-Datensatzes
     \item Textbasierte Konsolenausgabe
     \item Keine externen Bibliotheken
-    \item Umsetzung in Python und Jupyter Notebook
+    \item Umsetzung in Python; Ausführung und Dokumentation der Experimente in einem Jupyter Notebook (Tooling).
 \end{itemize}
 
 % ======================================================
@@ -174,6 +214,64 @@ ANOVA F-Wert: 5.21
 
 \textit{Hinweis:} Version 1.0 (imperativ) und Version 2.0 (funktional)
 liefern identische Resultate.
+
+% ======================================================
+\section{Refactoring: Vergleich Version 1.0 vs. Version 2.0}
+
+Beide Programmversionen implementieren dieselben Produktfunktionen und erzeugen identische Resultate, unterscheiden sich jedoch in der Umsetzung:
+Version 1.0 verwendet primär imperative Sprachmittel (Schleifen, Hilfsvariablen, schrittweiser Aufbau von Resultaten),
+während Version 2.0 die gleiche Logik mit funktionalen Sprachmitteln (z.\,B. \texttt{map}, \texttt{filter}, \texttt{reduce}, Lambdas) ausdrückt.
+
+\subsection{Konkrete Beispiele aus dem Projekt}
+
+\paragraph{Beispiel A: Filtern von Datensätzen}
+In Version 1.0 wird die Filterlogik mit einer Schleife und \texttt{continue} umgesetzt.
+In Version 2.0 wird dieselbe Logik deklarativ als Prädikatfunktion formuliert und per \texttt{filter} angewendet.
+
+\begin{lstlisting}[language=Python]
+# V1.0 (imperativ) - skizziert
+out = []
+for row in data:
+    if housing is not None and row["housing"] is not housing:
+        continue
+    if loan is not None and row["loan"] is not loan:
+        continue
+    out.append(row)
+
+# V2.0 (funktional) - skizziert
+def pred(row):
+    ...
+    return True/False
+
+out = list(filter(pred, data))
+\end{lstlisting}
+
+\paragraph{Beispiel B: Aggregation (Tabellenbreiten via reduce)}
+Für die tabellarische Ausgabe werden in Version 2.0 Spaltenbreiten über ein \texttt{reduce}-Faltungsmuster berechnet,
+während Version 1.0 die Breiten schrittweise in Schleifen aktualisiert.
+
+\begin{lstlisting}[language=Python]
+# V2.0 (funktional) - skizziert
+widths = reduce(update_widths, rows, widths_init)
+\end{lstlisting}
+
+\paragraph{Beispiel C: Transformation numerischer Werte (map)}
+Transformationen wie \texttt{balance\^{}2 + 1} werden in Version 2.0 direkt als Abbildung über die Liste beschrieben
+(\texttt{map} + Lambda), während Version 1.0 die Werte typischerweise in einer Schleife sammelt.
+
+\begin{lstlisting}[language=Python]
+# V2.0 (funktional) - skizziert
+sq1 = list(map(lambda b: b*b + 1.0, balances))
+\end{lstlisting}
+
+\subsection{Zusammenfassung der Unterschiede}
+
+\begin{itemize}
+  \item \textbf{Lesbarkeit:} Version 2.0 ist kompakter und beschreibt häufig \emph{was} berechnet wird, statt \emph{wie}.
+  \item \textbf{Wartbarkeit:} Wiederverwendbare Hilfsfunktionen (Prädikate, Mapping-Funktionen) reduzieren Duplikation.
+  \item \textbf{Fehleranfälligkeit:} Weniger mutable Zwischenzustände und weniger Hilfsvariablen verringern typische Fehlerquellen.
+\end{itemize}
+
 
 % ======================================================
 \section{Fazit}
@@ -214,8 +312,14 @@ für:
     \item Automatisierte Auswertungen
 \end{itemize}
 
+\noindent
 Zusammenfassend lässt sich sagen, dass funktionale Programmieransätze
 eine sinnvolle Ergänzung zur imperativen Programmierung darstellen und
-in vielen Anwendungsfällen zu einer klareren und effizienteren Lösung führen.
+in vielen Anwendungsfällen zu einer klareren und effizienteren Lösung führen. \\
+
+\newline
+\noindent\textit{Hinweis:} Der vollständige Quellcode befindet sich im Projekt-Repository:
+\href{https://github.com/stoicfist/Modul-323-Projektarbeit}{github.com/stoicfist/Modul-323-Projektarbeit}.
+Er wurde in dieser Dokumentation bewusst nicht vollständig abgedruckt, um den Fokus auf Konzept und Vergleich zu legen.
 
 \end{document}
