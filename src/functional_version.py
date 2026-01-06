@@ -304,6 +304,77 @@ def create_balance_filter(threshold: float) -> Callable[[Dict[str, Any]], bool]:
         return float(bal) > threshold
     return balance_predicate
 
+def combine_predicates(*predicates: Callable[[Dict[str, Any]], bool]) -> Callable[[Dict[str, Any]], bool]:
+    """Combine multiple predicate functions into a single predicate using AND logic.
+    
+    Higher-order function that takes multiple predicate functions and returns a new
+    predicate that returns True only if ALL input predicates return True. This enables
+    declarative composition of filter conditions without nested if statements.
+    
+    Functional approach: Uses all() with a generator expression to short-circuit
+    evaluation. The combined predicate maintains purity - no side effects, returns
+    same output for same input.
+    
+    This is particularly useful for composing multiple filter conditions in a
+    declarative way, allowing individual predicates to be defined separately,
+    tested independently, and combined as needed.
+    
+    Args:
+        *predicates: Variable number of predicate functions. Each predicate should
+                    take a record (dict) and return bool.
+    
+    Returns:
+        A new predicate function that returns True if all predicates return True.
+        If no predicates provided, returns a predicate that always returns True.
+    
+    Examples:
+        >>> # Individual predicates
+        >>> has_housing = lambda r: r.get('housing') is True
+        >>> has_loan = lambda r: r.get('loan') is True
+        >>> high_balance = lambda r: r.get('balance', 0) > 1000
+        >>> 
+        >>> # Combine predicates
+        >>> combined = combine_predicates(has_housing, has_loan, high_balance)
+        >>> 
+        >>> # Test with records
+        >>> record1 = {'housing': True, 'loan': True, 'balance': 1500}
+        >>> combined(record1)
+        True
+        >>> 
+        >>> record2 = {'housing': True, 'loan': False, 'balance': 1500}
+        >>> combined(record2)
+        False
+        
+        >>> # Use with filter()
+        >>> records = [
+        ...     {'housing': True, 'loan': True, 'balance': 1500},
+        ...     {'housing': True, 'loan': False, 'balance': 2000},
+        ...     {'housing': False, 'loan': True, 'balance': 500}
+        ... ]
+        >>> list(filter(combined, records))
+        [{'housing': True, 'loan': True, 'balance': 1500}]
+        
+        >>> # Dynamically build predicates
+        >>> predicates_list = []
+        >>> if True:  # Some condition
+        ...     predicates_list.append(has_housing)
+        >>> if True:  # Another condition
+        ...     predicates_list.append(high_balance)
+        >>> dynamic_filter = combine_predicates(*predicates_list)
+        >>> len(list(filter(dynamic_filter, records)))
+        2
+    
+    Note:
+        Uses short-circuit evaluation - stops checking predicates as soon as
+        one returns False, improving performance.
+    """
+    def combined_predicate(row: Dict[str, Any]) -> bool:
+        # all() with generator provides short-circuit evaluation
+        # Returns True if all predicates return True, or if no predicates provided
+        return all(pred(row) for pred in predicates)
+    
+    return combined_predicate
+
 
 def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
     total = len(data)
@@ -695,7 +766,35 @@ def main() -> None:
 
         elif choice == "2":
             housing, loan, balance_gt = _prompt_filters()
-            current = _apply_filters(data, housing, loan, balance_gt)
+            
+            # Functional composition pattern: Build predicates dynamically
+            # Each predicate is a pure function that takes a record and returns bool
+            predicates = []
+            
+            # Add housing predicate if specified
+            # Use default parameter to capture value (avoids late binding issue)
+            if housing is not None:
+                predicates.append(lambda r, h=housing: r.get("housing") is h)
+            
+            # Add loan predicate if specified
+            # Use default parameter to capture value (avoids late binding issue)
+            if loan is not None:
+                predicates.append(lambda r, l=loan: r.get("loan") is l)
+            
+            # Use create_balance_filter higher-order function for balance threshold
+            # This demonstrates function factory pattern - returns a configured predicate
+            if balance_gt is not None:
+                predicates.append(create_balance_filter(balance_gt))
+            
+            # Compose predicates using combine_predicates if any filters were specified
+            # combine_predicates returns a single predicate that applies AND logic
+            if predicates:
+                combined_filter = combine_predicates(*predicates)
+                current = list(filter(combined_filter, data))
+            else:
+                # No filters specified, use all data
+                current = list(data)
+            
             print(_header("FILTER RESULT"))
             print(f"Aktueller Datenbestand: {len(current)} / {len(data)}")
 
