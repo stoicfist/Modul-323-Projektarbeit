@@ -1,5 +1,34 @@
 from __future__ import annotations
 
+"""Bank Marketing Analysis - Imperative Implementation (V1.0)
+
+Authors: Peter Ngo, Alex Uscata
+Class: INA 23A
+Module: M323 - Functional Programming
+Date: 2026-01-06
+
+This module implements a bank marketing data analysis tool using an imperative
+programming approach. The implementation emphasizes explicit control flow through
+loops, mutable state management, and step-by-step iteration over data structures.
+
+Key Techniques:
+    - for-loops for explicit iteration over collections
+    - continue statements for early loop termination
+    - Manual accumulation with mutable variables
+    - Explicit state management and variable updates
+    - Index-based access and manipulation
+
+Dataset Information:
+    Portuguese bank marketing campaign data containing:
+    - Demographics: age, marital status, education, job
+    - Financial: balance (account balance in euros)
+    - Campaign: duration (last contact duration in seconds), pdays
+    - Target: complete (whether client subscribed to term deposit)
+
+The imperative approach makes the execution flow explicit and easy to follow
+for developers familiar with traditional procedural programming.
+"""
+
 import math
 import os
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -50,6 +79,30 @@ def _table(headers: Sequence[str], rows: Sequence[Sequence[str]], aligns: Option
 
 
 def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
+    """Filter bank records using imperative iteration with early exits.
+    
+    Iterates through each record explicitly, using continue statements to skip
+    records that don't match the filter criteria. Builds result list incrementally
+    by appending matching records to a mutable output list.
+    
+    Imperative approach: Uses explicit for-loop with continue statements for
+    early exit when conditions fail, making the filtering logic very readable
+    and debuggable step-by-step.
+    
+    Args:
+        data: List of bank records (dictionaries) to filter
+        housing: If provided, keep only records matching this housing loan status
+        loan: If provided, keep only records matching this personal loan status
+        balance_gt: If provided, keep only records with balance > this value
+    
+    Returns:
+        New list containing only records that pass all specified filters
+    
+    Example:
+        >>> records = [{'housing': True, 'balance': 1500}, {'housing': False, 'balance': 500}]
+        >>> _apply_filters(records, housing=True, loan=None, balance_gt=1000)
+        [{'housing': True, 'balance': 1500}]
+    """
     out: List[Dict[str, Any]] = []
     for row in data:
         if housing is not None and row.get("housing") is not housing:
@@ -76,6 +129,22 @@ def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
 
 
 def _mean(values: List[float]) -> Optional[float]:
+    """Calculate arithmetic mean using explicit accumulation.
+    
+    Imperative approach: Uses a mutable accumulator variable (s) that is
+    updated in each iteration of the loop. The sum is built step-by-step
+    through explicit addition operations.
+    
+    Args:
+        values: List of numeric values to average
+    
+    Returns:
+        Mean value, or None if list is empty
+    
+    Example:
+        >>> _mean([10.0, 20.0, 30.0])
+        20.0
+    """
     if not values:
         return None
     s = 0.0
@@ -117,6 +186,35 @@ def _duration_stats(data: List[Dict[str, Any]]) -> Tuple[Optional[int], Optional
 
 
 def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tuple[str, int, float]]:
+    """Distribute call durations into buckets and calculate success rate per bucket.
+    
+    Creates histogram-like buckets for call durations (e.g., 0-59s, 60-119s, etc.)
+    and computes the success rate (complete=True) for each bucket. This helps
+    identify optimal call duration ranges.
+    
+    Imperative approach: Uses multiple explicit loops:
+    1. First loop finds maximum duration to determine bucket count
+    2. While loop creates empty buckets
+    3. Converts tuples to mutable lists for in-place updates
+    4. Second loop places each record into appropriate bucket and updates counts
+    5. Final loop formats output with labels and percentages
+    
+    The step-by-step mutation of bucket counters makes the logic transparent
+    and easy to debug.
+    
+    Args:
+        data: List of bank records with 'duration' and 'complete' fields
+        bucket_size: Size of each bucket in seconds (default: 60)
+    
+    Returns:
+        List of tuples: (bucket_label, total_count, success_rate)
+        Sorted by bucket start time
+    
+    Example:
+        >>> records = [{'duration': 45, 'complete': True}, {'duration': 120, 'complete': False}]
+        >>> _duration_buckets(records, 60)
+        [('   0-  59', 1, 1.0), ('  60- 119', 0, 0.0), (' 120- 179', 1, 0.0)]
+    """
     if bucket_size <= 0:
         bucket_size = 60
 
@@ -162,6 +260,24 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
 
 
 def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Group records by a field value using imperative dictionary building.
+    
+    Imperative approach: Explicitly checks if each key exists in the dictionary,
+    creates empty lists when needed, then appends records one by one. The
+    grouping logic is transparent with clear conditional checks and mutations.
+    
+    Args:
+        data: List of records to group
+        key: Field name to group by (e.g., 'education', 'marital', 'job')
+    
+    Returns:
+        Dictionary mapping each unique key value to list of matching records
+    
+    Example:
+        >>> records = [{'job': 'admin'}, {'job': 'tech'}, {'job': 'admin'}]
+        >>> _group_by_key(records, 'job')
+        {'admin': [{'job': 'admin'}, {'job': 'admin'}], 'tech': [{'job': 'tech'}]}
+    """
     groups: Dict[str, List[Dict[str, Any]]] = {}
     for row in data:
         k = row.get(key)
@@ -248,6 +364,37 @@ def _compare_two_groups(data: List[Dict[str, Any]], key: str, g1: str, g2: str) 
 
 
 def _anova_f_balance(data: List[Dict[str, Any]], key: str) -> Optional[Tuple[float, int, int]]:
+    """Calculate ANOVA F-statistic for balance across groups.
+    
+    Performs one-way ANOVA to test if mean balance differs significantly across
+    groups (e.g., education levels, job types). The F-statistic compares variance
+    between groups to variance within groups.
+    
+    Imperative approach: Uses explicit loops to:
+    1. Extract balance values from each group
+    2. Calculate overall mean
+    3. Accumulate sum of squares between groups (ss_between)
+    4. Accumulate sum of squares within groups (ss_within)
+    5. Compute F-statistic from mean squares
+    
+    The calculation follows textbook ANOVA formula with explicit accumulation
+    of variance components.
+    
+    Args:
+        data: List of bank records
+        key: Field to group by (e.g., 'education', 'marital', 'job')
+    
+    Returns:
+        Tuple of (F-statistic, df_between, df_within), or None if insufficient data
+        F > 1 suggests between-group variance exceeds within-group variance
+        Higher F values indicate more significant group differences
+    
+    Example:
+        >>> records = [{'education': 'primary', 'balance': 1000}, 
+        ...            {'education': 'tertiary', 'balance': 5000}]
+        >>> _anova_f_balance(records, 'education')
+        (8.0, 1, 0)  # F-statistic, degrees of freedom between, within
+    """
     groups = _group_by_key(data, key)
 
     group_values: List[Tuple[str, List[float]]] = []

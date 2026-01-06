@@ -1,5 +1,38 @@
 from __future__ import annotations
 
+"""Common I/O Utilities for Bank Marketing Data Analysis
+
+Authors: Peter Ngo, Alex Uscata
+Class: INA 23A
+Module: M323 - Functional Programming
+Date: 2026-01-06
+
+This module provides shared input/output functionality for loading and parsing
+bank marketing data. It handles CSV file reading with automatic delimiter detection,
+type conversion for numeric and boolean fields, and data normalization.
+
+Key Features:
+    - Automatic CSV delimiter detection (comma vs semicolon)
+    - Type-safe conversion functions for bool, int, float
+    - Robust handling of missing/malformed values
+    - UTF-8 BOM support for international character sets
+    - Centralized data loading logic shared by both imperative and functional versions
+
+Dataset Schema:
+    - age: int (customer age)
+    - balance: float (account balance in euros)
+    - duration: int (last contact duration in seconds)
+    - pdays: int (days since previous contact)
+    - housing: bool (has housing loan)
+    - loan: bool (has personal loan)
+    - complete: bool (subscribed to term deposit - target variable)
+    - job, marital, education: str (categorical fields)
+
+This module uses a pragmatic mix of styles - the type conversion functions
+are functional (pure functions), while the CSV loading uses imperative iteration
+for clarity and performance.
+"""
+
 import csv
 import os
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -66,6 +99,31 @@ def _detect_delimiter(sample: str) -> str:
 
 
 def load_bank_data(csv_path: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Load and parse bank marketing data from CSV file.
+    
+    Reads CSV file with automatic delimiter detection, performs type conversions
+    for numeric and boolean fields, and normalizes string fields. Handles missing
+    values gracefully by converting them to None (numeric/bool) or empty strings.
+    
+    The function applies domain-specific transformations:
+    - Converts age, duration, pdays to integers (None if missing)
+    - Converts balance to float (None if missing)
+    - Parses housing/loan as booleans (yes/no → True/False)
+    - Ensures 'complete' (target variable) is always a boolean (defaults to False)
+    - Strips whitespace from categorical fields (job, marital, education)
+    
+    Args:
+        csv_path: Path to CSV file. If None, uses default data/DatenBank.csv
+    
+    Returns:
+        List of dictionaries, one per CSV row, with properly typed values
+    
+    Example:
+        >>> data = load_bank_data()
+        >>> data[0]
+        {'age': 58, 'balance': 2143.0, 'duration': 261, 'housing': True, 
+         'loan': False, 'complete': False, 'job': 'management', ...}
+    """
     path = csv_path or default_csv_path()
     with open(path, "r", encoding="utf-8-sig", newline="") as f:
         sample = f.read(4096)
@@ -98,6 +156,25 @@ def load_bank_data(csv_path: Optional[str] = None) -> List[Dict[str, Any]]:
 
 
 def normalize_choice_yes_no(value: str) -> Optional[bool]:
+    """Parse user input for yes/no questions into boolean or None.
+    
+    Accepts various common representations of yes/no answers and normalizes
+    them to True/False/None. Case-insensitive and whitespace-tolerant.
+    
+    Args:
+        value: User input string (e.g., 'yes', 'no', 'Y', 'n', '1', '0', 'skip')
+    
+    Returns:
+        True for affirmative responses, False for negative, None for skip/empty
+    
+    Example:
+        >>> normalize_choice_yes_no('YES')
+        True
+        >>> normalize_choice_yes_no('n')
+        False
+        >>> normalize_choice_yes_no('')
+        None
+    """
     text = (value or "").strip().lower()
     if text in {"", "skip", "-"}:
         return None
@@ -109,6 +186,25 @@ def normalize_choice_yes_no(value: str) -> Optional[bool]:
 
 
 def parse_balance_gt(value: str) -> Optional[float]:
+    """Parse user input for balance threshold into float or None.
+    
+    Converts string input to float for balance filtering. Returns None for
+    empty input (meaning "no filter") or invalid values.
+    
+    Args:
+        value: User input string (e.g., '1000', '2500.50', '')
+    
+    Returns:
+        Float value if valid number, None if empty or invalid
+    
+    Example:
+        >>> parse_balance_gt('1000')
+        1000.0
+        >>> parse_balance_gt('')
+        None
+        >>> parse_balance_gt('invalid')
+        None
+    """
     text = (value or "").strip()
     if text == "":
         return None

@@ -1,5 +1,38 @@
 from __future__ import annotations
 
+"""Bank Marketing Analysis - Functional Implementation (V2.0)
+
+Authors: Peter Ngo, Alex Uscata
+Class: INA 23A
+Module: M323 - Functional Programming
+Date: 2026-01-06
+
+This module implements a bank marketing data analysis tool using a functional
+programming approach. The implementation emphasizes declarative transformations,
+immutability, and composition of higher-order functions.
+
+Key Techniques:
+    - map() for element-wise transformations
+    - filter() for declarative selection
+    - reduce() for accumulation without mutation
+    - Lambda functions for inline operations
+    - List comprehensions for concise data processing
+    - Function composition and chaining
+
+Dataset Information:
+    Portuguese bank marketing campaign data containing:
+    - Demographics: age, marital status, education, job
+    - Financial: balance (account balance in euros)
+    - Campaign: duration (last contact duration in seconds), pdays
+    - Target: complete (whether client subscribed to term deposit)
+
+Paradigm:
+    The functional approach treats data transformations as a series of
+    immutable operations, making the code more declarative and often more
+    concise. Functions are pure when possible, avoiding side effects and
+    making the code easier to test and reason about.
+"""
+
 import math
 from functools import reduce
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -47,6 +80,30 @@ def _table(headers: Sequence[str], rows: Sequence[Sequence[str]], aligns: Option
 
 
 def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
+    """Filter bank records using functional filter with predicate function.
+    
+    Creates a predicate function that encapsulates all filter logic, then
+    applies it declaratively using filter(). No explicit loops or mutable
+    state - the filtering is expressed as "what to keep" rather than "how to iterate".
+    
+    Functional approach: Uses filter() higher-order function with a locally-defined
+    predicate. The predicate is a pure function that returns True/False based solely
+    on its input, making the logic easy to test and compose.
+    
+    Args:
+        data: List of bank records (dictionaries) to filter
+        housing: If provided, keep only records matching this housing loan status
+        loan: If provided, keep only records matching this personal loan status
+        balance_gt: If provided, keep only records with balance > this value
+    
+    Returns:
+        New list containing only records that pass all specified filters
+    
+    Example:
+        >>> records = [{'housing': True, 'balance': 1500}, {'housing': False, 'balance': 500}]
+        >>> _apply_filters(records, housing=True, loan=None, balance_gt=1000)
+        [{'housing': True, 'balance': 1500}]
+    """
     def pred(row: Dict[str, Any]) -> bool:
         if housing is not None and row.get("housing") is not housing:
             return False
@@ -69,6 +126,22 @@ def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
 
 
 def _mean(values: List[float]) -> Optional[float]:
+    """Calculate arithmetic mean using functional composition.
+    
+    Functional approach: Uses map() to ensure float conversion and sum() as a
+    reduction operation. No mutable accumulator - the sum is computed declaratively
+    in a single expression using built-in higher-order functions.
+    
+    Args:
+        values: List of numeric values to average
+    
+    Returns:
+        Mean value, or None if list is empty
+    
+    Example:
+        >>> _mean([10.0, 20.0, 30.0])
+        20.0
+    """
     return (sum(map(float, values)) / float(len(values))) if values else None
 
 
@@ -90,6 +163,35 @@ def _duration_stats(data: List[Dict[str, Any]]) -> Tuple[Optional[int], Optional
 
 
 def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tuple[str, int, float]]:
+    """Distribute call durations into buckets using functional transformations.
+    
+    Creates histogram-like buckets for call durations (e.g., 0-59s, 60-119s, etc.)
+    and computes the success rate (complete=True) for each bucket.
+    
+    Functional approach: Chains multiple functional operations:
+    1. Generator expression + filter() to extract valid durations
+    2. max(map()) to find maximum duration declaratively
+    3. range() to generate bucket start points
+    4. List comprehension to initialize bucket counters
+    5. reduce() with step function to accumulate counts per bucket
+    6. map() to transform raw counts into formatted output tuples
+    
+    No explicit loop indices or manual counter increments - each transformation
+    is expressed as a data pipeline operation.
+    
+    Args:
+        data: List of bank records with 'duration' and 'complete' fields
+        bucket_size: Size of each bucket in seconds (default: 60)
+    
+    Returns:
+        List of tuples: (bucket_label, total_count, success_rate)
+        Sorted by bucket start time
+    
+    Example:
+        >>> records = [{'duration': 45, 'complete': True}, {'duration': 120, 'complete': False}]
+        >>> _duration_buckets(records, 60)
+        [('   0-  59', 1, 1.0), ('  60- 119', 0, 0.0), (' 120- 179', 1, 0.0)]
+    """
     bucket_size = bucket_size if bucket_size > 0 else 60
     durations = list(filter(lambda d: isinstance(d, int), (r.get("duration") for r in data)))
     if not durations:
@@ -125,6 +227,29 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
 
 
 def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Group records by a field value using functional reduce.
+    
+    Functional approach: Uses reduce() to build the grouping dictionary by
+    accumulating records through a reducer function. Instead of explicit
+    mutation checks, uses setdefault() to handle both dictionary initialization
+    and appending in one concise operation.
+    
+    The reducer function 'add' takes an accumulator and one row, updates the
+    accumulator, and returns it for the next iteration - a classic functional
+    pattern for building complex data structures.
+    
+    Args:
+        data: List of records to group
+        key: Field name to group by (e.g., 'education', 'marital', 'job')
+    
+    Returns:
+        Dictionary mapping each unique key value to list of matching records
+    
+    Example:
+        >>> records = [{'job': 'admin'}, {'job': 'tech'}, {'job': 'admin'}]
+        >>> _group_by_key(records, 'job')
+        {'admin': [{'job': 'admin'}, {'job': 'admin'}], 'tech': [{'job': 'tech'}]}
+    """
     def add(acc: Dict[str, List[Dict[str, Any]]], row: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
         k = row.get(key)
         k_str = "" if k is None else str(k)
@@ -182,6 +307,38 @@ def _compare_two_groups(data: List[Dict[str, Any]], key: str, g1: str, g2: str) 
 
 
 def _anova_f_balance(data: List[Dict[str, Any]], key: str) -> Optional[Tuple[float, int, int]]:
+    """Calculate ANOVA F-statistic for balance across groups using functional style.
+    
+    Performs one-way ANOVA to test if mean balance differs significantly across
+    groups (e.g., education levels, job types). The F-statistic compares variance
+    between groups to variance within groups.
+    
+    Functional approach: Uses declarative transformations:
+    1. List comprehension to extract balance values per group
+    2. filter() to remove empty groups
+    3. Nested list comprehension to flatten all values
+    4. sum() with generator expression for ss_between (no accumulator variable)
+    5. Nested function ss_within() with sum() for within-group variance
+    6. sum() over map-like generator to total ss_within
+    
+    All variance components are computed through expressions rather than loops,
+    making the mathematical formula more visible in the code.
+    
+    Args:
+        data: List of bank records
+        key: Field to group by (e.g., 'education', 'marital', 'job')
+    
+    Returns:
+        Tuple of (F-statistic, df_between, df_within), or None if insufficient data
+        F > 1 suggests between-group variance exceeds within-group variance
+        Higher F values indicate more significant group differences
+    
+    Example:
+        >>> records = [{'education': 'primary', 'balance': 1000}, 
+        ...            {'education': 'tertiary', 'balance': 5000}]
+        >>> _anova_f_balance(records, 'education')
+        (8.0, 1, 0)  # F-statistic, degrees of freedom between, within
+    """
     groups = _group_by_key(data, key)
     group_values = [
         (name, [float(r["balance"]) for r in rows if isinstance(r.get("balance"), (int, float))])
