@@ -290,35 +290,58 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
     return list(map(mk, range(len(starts))))
 
 
-def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[str, Any]]]:
-    """Group records by a field value using functional reduce.
+def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, Tuple[Dict[str, Any], ...]]:
+    """Group records by a field value using functional reduce with immutable structures.
     
-    Functional approach: Uses reduce() to build the grouping dictionary by
-    accumulating records through a reducer function. Instead of explicit
-    mutation checks, uses setdefault() to handle both dictionary initialization
-    and appending in one concise operation.
+    Pure functional approach: Uses reduce() to build the grouping dictionary by
+    accumulating records through a pure reducer function. Unlike the previous
+    implementation that mutated the accumulator with setdefault().append(), this
+    version creates a completely NEW dictionary on each iteration using dict
+    unpacking {**acc, key: value}.
     
-    The reducer function 'add' takes an accumulator and one row, updates the
-    accumulator, and returns it for the next iteration - a classic functional
-    pattern for building complex data structures.
+    Immutability benefits:
+    - No side effects: The accumulator is never modified, only replaced
+    - Referential transparency: Same input always produces same output
+    - Thread-safe: No shared mutable state to cause race conditions
+    - Easier debugging: Each reduction step creates new state, preserving history
+    - True functional purity: Aligns with functional programming principles
+    
+    Groups are stored as tuples (immutable) rather than lists, reinforcing the
+    immutable nature of the data structure throughout. The tuple concatenation
+    (existing_group + (row,)) creates a new tuple rather than mutating a list.
+    
+    The reducer function 'add' takes an accumulator and one row, creates a new
+    dictionary with the updated group, and returns it for the next iteration - a
+    truly pure functional pattern for building complex data structures.
     
     Args:
         data: List of records to group
         key: Field name to group by (e.g., 'education', 'marital', 'job')
     
     Returns:
-        Dictionary mapping each unique key value to list of matching records
+        Dictionary mapping each unique key value to tuple of matching records
     
     Example:
         >>> records = [{'job': 'admin'}, {'job': 'tech'}, {'job': 'admin'}]
         >>> _group_by_key(records, 'job')
-        {'admin': [{'job': 'admin'}, {'job': 'admin'}], 'tech': [{'job': 'tech'}]}
+        {'admin': ({'job': 'admin'}, {'job': 'admin'}), 'tech': ({'job': 'tech'},)}
     """
-    def add(acc: Dict[str, List[Dict[str, Any]]], row: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+    def add(acc: Dict[str, Tuple[Dict[str, Any], ...]], row: Dict[str, Any]) -> Dict[str, Tuple[Dict[str, Any], ...]]:
+        """Pure reducer that creates new dictionary instead of mutating accumulator.
+        
+        Uses dict unpacking {**acc, key: value} to create a new dictionary with
+        all previous groups plus the updated group. The updated group is created
+        by tuple concatenation (old_tuple + (new_element,)) rather than list
+        mutation. This ensures complete immutability throughout the reduction.
+        """
         k = row.get(key)
         k_str = "" if k is None else str(k)
-        acc.setdefault(k_str, []).append(row)
-        return acc
+        # Get existing group as tuple, or empty tuple if key doesn't exist
+        existing_group = acc.get(k_str, ())
+        # Create new tuple by concatenating existing group with new row
+        new_group = existing_group + (row,)
+        # Return NEW dictionary with all previous groups plus updated group
+        return {**acc, k_str: new_group}
 
     return reduce(add, data, {})
 
@@ -327,7 +350,7 @@ def _group_metrics(data: List[Dict[str, Any]], key: str) -> List[Tuple[str, int,
     groups = _group_by_key(data, key)
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], float]:
-        rows = groups[name]
+        rows = list(groups[name])  # Convert tuple to list for processing
         count = len(rows)
         ages = [float(r["age"]) for r in rows if isinstance(r.get("age"), int)]
         balances = [float(r["balance"]) for r in rows if isinstance(r.get("balance"), (int, float))]
@@ -343,7 +366,7 @@ def _marital_compare(data: List[Dict[str, Any]]) -> List[Tuple[str, int, Optiona
     order = ["single", "married", "divorced"]
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], float]:
-        rows = groups.get(name, [])
+        rows = list(groups.get(name, ()))  # Convert tuple to list, default to empty tuple
         count = len(rows)
         balances = [float(r["balance"]) for r in rows if isinstance(r.get("balance"), (int, float))]
         durations = [float(r["duration"]) for r in rows if isinstance(r.get("duration"), int)]
@@ -358,7 +381,7 @@ def _compare_two_groups(data: List[Dict[str, Any]], key: str, g1: str, g2: str) 
     groups = _group_by_key(data, key)
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], Optional[float], float]:
-        rows = groups.get(name, [])
+        rows = list(groups.get(name, ()))  # Convert tuple to list, default to empty tuple
         count = len(rows)
         ages = [float(r["age"]) for r in rows if isinstance(r.get("age"), int)]
         balances = [float(r["balance"]) for r in rows if isinstance(r.get("balance"), (int, float))]
