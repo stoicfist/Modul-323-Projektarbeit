@@ -33,6 +33,13 @@ are functional (pure functions), while the CSV loading uses imperative iteration
 for clarity and performance.
 """
 
+# ==============================================================================
+# Pure Functions - Type Conversion Utilities
+# ==============================================================================
+# These functions are pure (no side effects, referentially transparent) and
+# safe for use with map(), filter(), reduce() in functional pipelines.
+# ==============================================================================
+
 import csv
 import os
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -48,6 +55,24 @@ def default_csv_path() -> str:
 
 
 def _to_bool(value: Any) -> Optional[bool]:
+    """Convert any value to boolean with graceful None handling.
+    
+    Pure function: Same input always produces same output, no side effects.
+    Ideal for normalizing yes/no survey responses in functional pipelines.
+    
+    Args:
+        value: Any value to convert (str, bool, int, None)
+    
+    Returns:
+        True for 'yes'/'y'/'true'/'1', False for 'no'/'n'/'false'/'0',
+        None for empty/invalid/null values
+    
+    Example:
+        >>> _to_bool("yes")
+        True
+        >>> list(map(_to_bool, ["yes", "no", None, "invalid"]))
+        [True, False, None, None]
+    """
     if value is None:
         return None
     if isinstance(value, bool):
@@ -63,6 +88,23 @@ def _to_bool(value: Any) -> Optional[bool]:
 
 
 def _to_int(value: Any) -> Optional[int]:
+    """Convert any value to integer with graceful None handling.
+    
+    Pure function: Deterministic conversion with no side effects.
+    Handles string representations of floats (e.g., "42.7" → 42).
+    
+    Args:
+        value: Any value to convert (str, int, float, None)
+    
+    Returns:
+        Integer value if conversion succeeds, None for empty/invalid values
+    
+    Example:
+        >>> _to_int("42")
+        42
+        >>> list(map(_to_int, ["10", "20.5", "", None]))
+        [10, 20, None, None]
+    """
     if value is None:
         return None
     text = str(value).strip()
@@ -75,6 +117,23 @@ def _to_int(value: Any) -> Optional[int]:
 
 
 def _to_float(value: Any) -> Optional[float]:
+    """Convert any value to float with graceful None handling.
+    
+    Pure function: Consistent behavior for numeric conversions.
+    Perfect for parsing financial data (balances, amounts) in pipelines.
+    
+    Args:
+        value: Any value to convert (str, int, float, None)
+    
+    Returns:
+        Float value if conversion succeeds, None for empty/invalid values
+    
+    Example:
+        >>> _to_float("3.14")
+        3.14
+        >>> list(map(_to_float, ["100", "2.5", "", "invalid"]))
+        [100.0, 2.5, None, None]
+    """
     if value is None:
         return None
     text = str(value).strip()
