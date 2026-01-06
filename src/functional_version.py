@@ -35,9 +35,167 @@ Paradigm:
 
 import math
 from functools import reduce
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, TypeVar
 
 from common_io import load_bank_data, normalize_choice_yes_no, parse_balance_gt
+
+
+# Type variables for generic function composition
+T = TypeVar('T')
+U = TypeVar('U')
+V = TypeVar('V')
+
+
+def compose(*fns: Callable) -> Callable:
+    """Right-to-left function composition (mathematical convention).
+    
+    Composes multiple functions into a single function, applying them from right
+    to left. This follows mathematical notation: (f ∘ g)(x) = f(g(x)).
+    
+    Functional approach: Uses reduce() to fold functions together, creating a new
+    function that applies each transformation in reverse order. This enables
+    declarative pipeline construction where operations read in mathematical order.
+    
+    The composition is lazy - no computation happens until the resulting function
+    is called with an argument. This allows for efficient function reuse and
+    clear separation between pipeline definition and execution.
+    
+    Args:
+        *fns: Variable number of functions to compose. Each function should take
+              one argument (the output of the next function in the chain).
+    
+    Returns:
+        A new function that applies all input functions in right-to-left order.
+        If no functions provided, returns identity function.
+    
+    Examples:
+        >>> # Simple numeric transformations
+        >>> add_10 = lambda x: x + 10
+        >>> multiply_2 = lambda x: x * 2
+        >>> square = lambda x: x ** 2
+        >>> 
+        >>> # compose applies right-to-left: square(multiply_2(add_10(5)))
+        >>> transform = compose(square, multiply_2, add_10)
+        >>> transform(5)  # (5 + 10) * 2 = 30, then 30^2 = 900
+        900
+        
+        >>> # Data pipeline: filter then map
+        >>> positive = lambda nums: filter(lambda x: x > 0, nums)
+        >>> doubled = lambda nums: map(lambda x: x * 2, nums)
+        >>> to_list = lambda it: list(it)
+        >>> 
+        >>> # Reads mathematically: to_list(doubled(positive(data)))
+        >>> process = compose(to_list, doubled, positive)
+        >>> process([-2, -1, 0, 1, 2, 3])
+        [2, 4, 6]
+        
+        >>> # Bank data transformation pipeline
+        >>> extract_balance = lambda data: map(lambda r: r.get('balance', 0), data)
+        >>> filter_positive = lambda vals: filter(lambda x: x > 0, vals)
+        >>> compute_total = lambda vals: sum(vals)
+        >>> 
+        >>> total_positive_balance = compose(compute_total, filter_positive, extract_balance)
+        >>> records = [{'balance': 1000}, {'balance': -500}, {'balance': 2000}]
+        >>> total_positive_balance(records)
+        3000
+    
+    Note:
+        For left-to-right composition (Unix pipe style), use pipe() instead.
+    """
+    def composed(arg: Any) -> Any:
+        # reduce applies functions right-to-left by using reversed()
+        # Starting value is the input arg, each function transforms the accumulator
+        return reduce(lambda acc, fn: fn(acc), reversed(fns), arg)
+    
+    # Handle edge case: no functions provided
+    return composed if fns else lambda x: x
+
+
+def pipe(*fns: Callable) -> Callable:
+    """Left-to-right function composition (Unix pipe style).
+    
+    Composes multiple functions into a single function, applying them from left
+    to right. This follows Unix pipe notation: data | fn1 | fn2 | fn3.
+    
+    Functional approach: Uses reduce() to fold functions together, creating a new
+    function that applies each transformation in the order they appear. This enables
+    intuitive pipeline construction where operations read like natural language or
+    Unix commands.
+    
+    The composition is lazy - no computation happens until the resulting function
+    is called with an argument. This is more intuitive than compose() for many
+    developers as it reads in execution order.
+    
+    Args:
+        *fns: Variable number of functions to compose. Each function should take
+              one argument (the output of the previous function in the chain).
+    
+    Returns:
+        A new function that applies all input functions in left-to-right order.
+        If no functions provided, returns identity function.
+    
+    Examples:
+        >>> # Simple numeric transformations
+        >>> add_10 = lambda x: x + 10
+        >>> multiply_2 = lambda x: x * 2
+        >>> square = lambda x: x ** 2
+        >>> 
+        >>> # pipe applies left-to-right: add_10(5), then multiply_2, then square
+        >>> transform = pipe(add_10, multiply_2, square)
+        >>> transform(5)  # (5 + 10) = 15, then * 2 = 30, then 30^2 = 900
+        900
+        
+        >>> # Data pipeline: reads like English "filter, then map, then collect"
+        >>> positive = lambda nums: filter(lambda x: x > 0, nums)
+        >>> doubled = lambda nums: map(lambda x: x * 2, nums)
+        >>> to_list = lambda it: list(it)
+        >>> 
+        >>> # Reads naturally: positive, then doubled, then to_list
+        >>> process = pipe(positive, doubled, to_list)
+        >>> process([-2, -1, 0, 1, 2, 3])
+        [2, 4, 6]
+        
+        >>> # Bank data ETL pipeline (Extract, Transform, Load)
+        >>> extract_balance = lambda data: map(lambda r: r.get('balance', 0), data)
+        >>> filter_positive = lambda vals: filter(lambda x: x > 0, vals)
+        >>> compute_total = lambda vals: sum(vals)
+        >>> 
+        >>> # Reads like steps: extract, filter, compute
+        >>> total_positive_balance = pipe(extract_balance, filter_positive, compute_total)
+        >>> records = [{'balance': 1000}, {'balance': -500}, {'balance': 2000}]
+        >>> total_positive_balance(records)
+        3000
+        
+        >>> # Complex bank marketing analysis
+        >>> has_housing_loan = lambda r: r.get('housing') is True
+        >>> high_balance = lambda r: r.get('balance', 0) > 1000
+        >>> extract_age = lambda r: r.get('age', 0)
+        >>> 
+        >>> analyze_customers = pipe(
+        ...     lambda data: filter(has_housing_loan, data),
+        ...     lambda data: filter(high_balance, data),
+        ...     lambda data: map(extract_age, data),
+        ...     lambda ages: list(ages),
+        ...     lambda ages: sum(ages) / len(ages) if ages else 0
+        ... )
+        >>> customers = [
+        ...     {'housing': True, 'balance': 1500, 'age': 30},
+        ...     {'housing': True, 'balance': 500, 'age': 25},
+        ...     {'housing': False, 'balance': 2000, 'age': 40}
+        ... ]
+        >>> analyze_customers(customers)  # Average age of housing loan customers with balance > 1000
+        30.0
+    
+    Note:
+        For right-to-left composition (mathematical style), use compose() instead.
+    """
+    def piped(arg: Any) -> Any:
+        # reduce applies functions left-to-right (no reversed() needed)
+        # Starting value is the input arg, each function transforms the accumulator
+        return reduce(lambda acc, fn: fn(acc), fns, arg)
+    
+    # Handle edge case: no functions provided
+    return piped if fns else lambda x: x
 
 
 def _header(title: str) -> str:
