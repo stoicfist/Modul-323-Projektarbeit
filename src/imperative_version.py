@@ -85,9 +85,13 @@ def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Op
     records that don't match the filter criteria. Builds result list incrementally
     by appending matching records to a mutable output list.
     
-    Imperative approach: Uses explicit for-loop with continue statements for
-    early exit when conditions fail, making the filtering logic very readable
-    and debuggable step-by-step.
+    Imperative characteristics:
+    - Explicit for-loop with manual iteration control
+    - Mutable accumulator (out) modified via append()
+    - continue statements for early loop exit
+    - Step-by-step conditional checks (if/continue pattern)
+    
+    Functional equivalent: filter(lambda r: all(predicates), data)
     
     Args:
         data: List of bank records (dictionaries) to filter
@@ -131,9 +135,14 @@ def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
 def _mean(values: List[float]) -> Optional[float]:
     """Calculate arithmetic mean using explicit accumulation.
     
-    Imperative approach: Uses a mutable accumulator variable (s) that is
-    updated in each iteration of the loop. The sum is built step-by-step
-    through explicit addition operations.
+    Imperative characteristics:
+    - Mutable accumulator variable (s) updated in loop
+    - Explicit for-loop iterating over values
+    - State changes through += operator
+    - Manual division after accumulation
+    
+    Functional equivalent: reduce(lambda acc, v: acc + v, values, 0.0) / len(values)
+    or simply: sum(values) / len(values)
     
     Args:
         values: List of numeric values to average
@@ -192,15 +201,15 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
     and computes the success rate (complete=True) for each bucket. This helps
     identify optimal call duration ranges.
     
-    Imperative approach: Uses multiple explicit loops:
-    1. First loop finds maximum duration to determine bucket count
-    2. While loop creates empty buckets
-    3. Converts tuples to mutable lists for in-place updates
-    4. Second loop places each record into appropriate bucket and updates counts
-    5. Final loop formats output with labels and percentages
+    Imperative characteristics:
+    - Multiple sequential for/while loops (find max, create buckets, populate, format)
+    - Mutable list of lists (mutable[idx][1] += 1) for in-place updates
+    - Index-based access and modification (mutable[idx][...])
+    - continue statements for skipping invalid data
+    - Explicit state management across multiple phases
     
-    The step-by-step mutation of bucket counters makes the logic transparent
-    and easy to debug.
+    Functional equivalent: Use reduce() with immutable tuple accumulator,
+    or groupby() with map() for bucket assignment and aggregation.
     
     Args:
         data: List of bank records with 'duration' and 'complete' fields
