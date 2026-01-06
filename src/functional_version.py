@@ -35,7 +35,7 @@ Paradigm:
 
 import math
 from functools import reduce
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from common_io import load_bank_data, normalize_choice_yes_no, parse_balance_gt
 
@@ -63,8 +63,11 @@ def _fmt_int(value: Optional[int]) -> str:
 
 def _table(headers: Sequence[str], rows: Sequence[Sequence[str]], aligns: Optional[Sequence[str]] = None) -> str:
     aligns = aligns or ["<"] * len(headers)
+    # Calculate column widths using map (transform headers to lengths)
     widths = list(map(len, headers))
 
+    # Use reduce to fold over rows and accumulate maximum widths.
+    # The accumulator pattern: acc = [w1, w2, ...], updated for each row.
     def upd(acc: List[int], row: Sequence[str]) -> List[int]:
         return [max(acc[i], len(cell)) for i, cell in enumerate(row)]
 
@@ -104,6 +107,8 @@ def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Op
         >>> _apply_filters(records, housing=True, loan=None, balance_gt=1000)
         [{'housing': True, 'balance': 1500}]
     """
+    # Functional approach: Define predicate function, then filter entire dataset.
+    # No mutable state, no continue statements - pure boolean logic.
     def pred(row: Dict[str, Any]) -> bool:
         if housing is not None and row.get("housing") is not housing:
             return False
@@ -118,8 +123,33 @@ def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Op
     return list(filter(pred, data))
 
 
+def create_balance_filter(threshold: float) -> Callable[[Dict[str, Any]], bool]:
+    """Higher-order function: Returns a filter function for balance threshold.
+    
+    This demonstrates functional composition - a function that returns a function.
+    Useful for creating multiple filters with different thresholds.
+    
+    Args:
+        threshold: Minimum balance value
+        
+    Returns:
+        Filter function that checks if balance > threshold
+        
+    Example:
+        >>> high_balance_filter = create_balance_filter(1000.0)
+        >>> filtered = list(filter(high_balance_filter, data))
+    """
+    def balance_predicate(row: Dict[str, Any]) -> bool:
+        bal = row.get("balance")
+        if bal is None:
+            return False
+        return float(bal) > threshold
+    return balance_predicate
+
+
 def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
     total = len(data)
+    # Count successes using generator expression - memory efficient, no intermediate list.
     yes_count = sum(1 for r in data if r.get("complete") is True)
     quote = (yes_count / total) if total else 0.0
     return total, yes_count, quote
@@ -155,6 +185,12 @@ def _variance_population(values: List[float]) -> Optional[float]:
 
 
 def _duration_stats(data: List[Dict[str, Any]]) -> Tuple[Optional[int], Optional[int], Optional[float], Optional[float]]:
+    # Functional pipeline:
+    # 1. Generator: extract 'duration' field from each record
+    # 2. Filter: keep only integer values
+    # 3. Map: convert to int type
+    # 4. List: materialize filtered results
+    # This replaces a loop with continue statements.
     durations = list(map(int, filter(lambda d: isinstance(d, int), (r.get("duration") for r in data))))
     if not durations:
         return None, None, None, None
@@ -203,6 +239,9 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
         i = d // bucket_size
         return min(max(i, 0), len(starts) - 1)
 
+    # Use reduce to accumulate bucket counts across all records.
+    # Accumulator: List[List[int]] where each inner list = [total, yes_count]
+    # This replaces a mutable list updated in a loop.
     def step(acc: List[List[int]], row: Dict[str, Any]) -> List[List[int]]:
         d = row.get("duration")
         if not isinstance(d, int):
@@ -356,6 +395,8 @@ def _anova_f_balance(data: List[Dict[str, Any]], key: str) -> Optional[Tuple[flo
     if overall is None:
         return None
 
+    # Calculate between-group sum of squares using sum() with generator expression.
+    # Equivalent to imperative loop but more declarative.
     ss_between = sum(len(vals) * (_mean(vals) - overall) ** 2 for _, vals in group_values if _mean(vals) is not None)
 
     def ss_within(vals: List[float]) -> float:
@@ -426,6 +467,10 @@ def _menu() -> str:
 def main() -> None:
     data = load_bank_data()
     current = list(data)
+
+    # Example of higher-order function usage (not used in main flow):
+    # high_balance_filter = create_balance_filter(1000.0)
+    # high_balance_customers = list(filter(high_balance_filter, current))
 
     print(_header("BANK MARKETING – CLI"))
     print(f"Datensätze geladen: {len(data)}")
