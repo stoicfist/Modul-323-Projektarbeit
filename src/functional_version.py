@@ -701,9 +701,49 @@ def main() -> None:
 
         elif choice == "3":
             print(_header("TRANSFORMATIONEN"))
-            balances = [float(r["balance"]) for r in current if isinstance(r.get("balance"), (int, float))]
-            logs = list(filter(lambda x: x is not None, map(lambda b: math.log(b) if b > 0.0 else None, balances)))
-            sq1 = list(map(lambda b: b * b + 1.0, balances))
+            
+            # Define reusable pipeline components
+            # Step 1: Filter records with valid balance (int or float)
+            filter_valid_balance = lambda records: filter(
+                lambda r: isinstance(r.get("balance"), (int, float)), 
+                records
+            )
+            # Step 2: Extract balance values and convert to float
+            extract_balances = lambda records: map(
+                lambda r: float(r["balance"]), 
+                records
+            )
+            # Step 3: Materialize the iterator into a list
+            to_list = lambda it: list(it)
+            
+            # Create a pipeline using pipe() for left-to-right composition
+            # Reads naturally: filter valid records -> extract balances -> collect to list
+            balance_pipeline = pipe(
+                filter_valid_balance,
+                extract_balances,
+                to_list
+            )
+            
+            # Execute the pipeline once to get base balance data
+            balances = balance_pipeline(current)
+            
+            # Define transformation pipelines using compose for each transformation
+            # Log transformation: balance -> log(balance) if positive, else None -> filter out Nones
+            log_transform_pipeline = pipe(
+                lambda vals: map(lambda b: math.log(b) if b > 0.0 else None, vals),
+                lambda vals: filter(lambda x: x is not None, vals),
+                to_list
+            )
+            
+            # Square + 1 transformation: balance -> balance^2 + 1
+            square_plus_one_pipeline = pipe(
+                lambda vals: map(lambda b: b * b + 1.0, vals),
+                to_list
+            )
+            
+            # Apply transformations using the pipelines
+            logs = log_transform_pipeline(balances)
+            sq1 = square_plus_one_pipeline(balances)
 
             def stats_line(name: str, values: List[float]) -> List[str]:
                 mu = _mean(values)
