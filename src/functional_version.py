@@ -208,9 +208,18 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
     1. Generator expression + filter() to extract valid durations
     2. max(map()) to find maximum duration declaratively
     3. range() to generate bucket start points
-    4. List comprehension to initialize bucket counters
-    5. reduce() with step function to accumulate counts per bucket
+    4. Tuple-based immutable accumulator initialization
+    5. reduce() with step function that returns NEW tuples (truly immutable)
     6. map() to transform raw counts into formatted output tuples
+    
+    Pure functional accumulator pattern: Unlike the previous implementation that
+    mutated list elements in-place (acc[i][0] += 1), this version creates entirely
+    new tuples at each reduction step. The step function never modifies existing
+    data structures - it constructs a fresh tuple by copying unchanged buckets and
+    creating a new tuple for the updated bucket. This is more purely functional
+    because it maintains referential transparency: the same input always produces
+    the same output without side effects. While less efficient for large datasets,
+    it better demonstrates immutability principles central to functional programming.
     
     No explicit loop indices or manual counter increments - each transformation
     is expressed as a data pipeline operation.
@@ -240,18 +249,34 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
         return min(max(i, 0), len(starts) - 1)
 
     # Use reduce to accumulate bucket counts across all records.
-    # Accumulator: List[List[int]] where each inner list = [total, yes_count]
-    # This replaces a mutable list updated in a loop.
-    def step(acc: List[List[int]], row: Dict[str, Any]) -> List[List[int]]:
+    # Accumulator: Tuple[Tuple[int, int], ...] where each inner tuple = (total, yes_count)
+    # This uses truly immutable data structures - no in-place mutations.
+    def step(acc: Tuple[Tuple[int, int], ...], row: Dict[str, Any]) -> Tuple[Tuple[int, int], ...]:
+        """Pure reducer function that returns a NEW tuple instead of mutating.
+        
+        This is more purely functional than the list-based approach because:
+        - No side effects: acc is never modified, only read
+        - Referential transparency: same inputs always produce same output
+        - Immutability: tuples cannot be changed after creation
+        
+        Creates new tuple by concatenating:
+        1. All buckets before the target index (unchanged)
+        2. Updated bucket at target index (new tuple with incremented counts)
+        3. All buckets after the target index (unchanged)
+        """
         d = row.get("duration")
         if not isinstance(d, int):
             return acc
         i = idx_of(d)
-        acc[i][0] += 1
-        acc[i][1] += 1 if row.get("complete") is True else 0
-        return acc
+        # Extract current counts for the target bucket
+        total, yes = acc[i]
+        # Increment counts based on record data
+        new_total = total + 1
+        new_yes = yes + (1 if row.get("complete") is True else 0)
+        # Return NEW tuple: buckets before + updated bucket + buckets after
+        return acc[:i] + ((new_total, new_yes),) + acc[i+1:]
 
-    init = [[0, 0] for _ in starts]  # [total, yes]
+    init = tuple((0, 0) for _ in starts)  # Tuple of tuples: ((total, yes), ...)
     counts = reduce(step, data, init)
 
     def mk(i: int) -> Tuple[str, int, float]:
