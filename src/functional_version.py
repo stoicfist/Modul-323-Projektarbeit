@@ -221,11 +221,9 @@ def _fmt_int(value: Optional[int]) -> str:
 
 def _table(headers: Sequence[str], rows: Sequence[Sequence[str]], aligns: Optional[Sequence[str]] = None) -> str:
     aligns = aligns or ["<"] * len(headers)
-    # Calculate column widths using map (transform headers to lengths)
     widths = list(map(len, headers))
 
-    # Use reduce to fold over rows and accumulate maximum widths.
-    # The accumulator pattern: acc = [w1, w2, ...], updated for each row.
+    # Use reduce to calculate maximum column widths across all rows
     def upd(acc: List[int], row: Sequence[str]) -> List[int]:
         return [max(acc[i], len(cell)) for i, cell in enumerate(row)]
 
@@ -369,8 +367,7 @@ def combine_predicates(*predicates: Callable[[Dict[str, Any]], bool]) -> Callabl
         one returns False, improving performance.
     """
     def combined_predicate(row: Dict[str, Any]) -> bool:
-        # all() with generator provides short-circuit evaluation
-        # Returns True if all predicates return True, or if no predicates provided
+        # Short-circuit evaluation: returns True only if all predicates return True
         return all(pred(row) for pred in predicates)
     
     return combined_predicate
@@ -378,7 +375,6 @@ def combine_predicates(*predicates: Callable[[Dict[str, Any]], bool]) -> Callabl
 
 def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
     total = len(data)
-    # Count successes using generator expression - memory efficient, no intermediate list.
     yes_count = sum(1 for r in data if r.get("complete") is True)
     quote = (yes_count / total) if total else 0.0
     return total, yes_count, quote
@@ -414,12 +410,7 @@ def _variance_population(values: List[float]) -> Optional[float]:
 
 
 def _duration_stats(data: List[Dict[str, Any]]) -> Tuple[Optional[int], Optional[int], Optional[float], Optional[float]]:
-    # Functional pipeline:
-    # 1. Generator: extract 'duration' field from each record
-    # 2. Filter: keep only integer values
-    # 3. Map: convert to int type
-    # 4. List: materialize filtered results
-    # This replaces a loop with continue statements.
+    # Extract and filter valid duration values using functional pipeline
     durations = list(map(int, filter(lambda d: isinstance(d, int), (r.get("duration") for r in data))))
     if not durations:
         return None, None, None, None
@@ -477,21 +468,12 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
         i = d // bucket_size
         return min(max(i, 0), len(starts) - 1)
 
-    # Use reduce to accumulate bucket counts across all records.
-    # Accumulator: Tuple[Tuple[int, int], ...] where each inner tuple = (total, yes_count)
-    # This uses truly immutable data structures - no in-place mutations.
+    # Immutable accumulator: Tuple[Tuple[int, int], ...] where each tuple = (total, yes_count)
     def step(acc: Tuple[Tuple[int, int], ...], row: Dict[str, Any]) -> Tuple[Tuple[int, int], ...]:
-        """Pure reducer function that returns a NEW tuple instead of mutating.
+        """Pure reducer: returns new tuple instead of mutating.
         
-        This is more purely functional than the list-based approach because:
-        - No side effects: acc is never modified, only read
-        - Referential transparency: same inputs always produce same output
-        - Immutability: tuples cannot be changed after creation
-        
-        Creates new tuple by concatenating:
-        1. All buckets before the target index (unchanged)
-        2. Updated bucket at target index (new tuple with incremented counts)
-        3. All buckets after the target index (unchanged)
+        Creates new tuple by concatenating: buckets_before + updated_bucket + buckets_after
+        This maintains referential transparency and immutability.
         """
         d = row.get("duration")
         if not isinstance(d, int):
@@ -502,10 +484,9 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
         # Increment counts based on record data
         new_total = total + 1
         new_yes = yes + (1 if row.get("complete") is True else 0)
-        # Return NEW tuple: buckets before + updated bucket + buckets after
         return acc[:i] + ((new_total, new_yes),) + acc[i+1:]
 
-    init = tuple((0, 0) for _ in starts)  # Tuple of tuples: ((total, yes), ...)
+    init = tuple((0, 0) for _ in starts)
     counts = reduce(step, data, init)
 
     def mk(i: int) -> Tuple[str, int, float]:
@@ -556,20 +537,11 @@ def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, Tuple[Dict[
         {'admin': ({'job': 'admin'}, {'job': 'admin'}), 'tech': ({'job': 'tech'},)}
     """
     def add(acc: Dict[str, Tuple[Dict[str, Any], ...]], row: Dict[str, Any]) -> Dict[str, Tuple[Dict[str, Any], ...]]:
-        """Pure reducer that creates new dictionary instead of mutating accumulator.
-        
-        Uses dict unpacking {**acc, key: value} to create a new dictionary with
-        all previous groups plus the updated group. The updated group is created
-        by tuple concatenation (old_tuple + (new_element,)) rather than list
-        mutation. This ensures complete immutability throughout the reduction.
-        """
+        """Pure reducer: creates new dict via unpacking instead of mutation."""
         k = row.get(key)
         k_str = "" if k is None else str(k)
-        # Get existing group as tuple, or empty tuple if key doesn't exist
         existing_group = acc.get(k_str, ())
-        # Create new tuple by concatenating existing group with new row
         new_group = existing_group + (row,)
-        # Return NEW dictionary with all previous groups plus updated group
         return {**acc, k_str: new_group}
 
     return reduce(add, data, {})
@@ -579,7 +551,7 @@ def _group_metrics(data: List[Dict[str, Any]], key: str) -> List[Tuple[str, int,
     groups = _group_by_key(data, key)
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], float]:
-        rows = list(groups[name])  # Convert tuple to list for processing
+        rows = list(groups[name])
         count = len(rows)
         ages = [float(r["age"]) for r in rows if isinstance(r.get("age"), int)]
         balances = [float(r["balance"]) for r in rows if isinstance(r.get("balance"), (int, float))]
@@ -595,7 +567,7 @@ def _marital_compare(data: List[Dict[str, Any]]) -> List[Tuple[str, int, Optiona
     order = ["single", "married", "divorced"]
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], float]:
-        rows = list(groups.get(name, ()))  # Convert tuple to list, default to empty tuple
+        rows = list(groups.get(name, ()))
         count = len(rows)
         balances = [float(r["balance"]) for r in rows if isinstance(r.get("balance"), (int, float))]
         durations = [float(r["duration"]) for r in rows if isinstance(r.get("duration"), int)]
@@ -610,7 +582,7 @@ def _compare_two_groups(data: List[Dict[str, Any]], key: str, g1: str, g2: str) 
     groups = _group_by_key(data, key)
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], Optional[float], float]:
-        rows = list(groups.get(name, ()))  # Convert tuple to list, default to empty tuple
+        rows = list(groups.get(name, ()))
         count = len(rows)
         ages = [float(r["age"]) for r in rows if isinstance(r.get("age"), int)]
         balances = [float(r["balance"]) for r in rows if isinstance(r.get("balance"), (int, float))]
@@ -672,8 +644,6 @@ def _anova_f_balance(data: List[Dict[str, Any]], key: str) -> Optional[Tuple[flo
     if overall is None:
         return None
 
-    # Calculate between-group sum of squares using sum() with generator expression.
-    # Equivalent to imperative loop but more declarative.
     ss_between = sum(len(vals) * (_mean(vals) - overall) ** 2 for _, vals in group_values if _mean(vals) is not None)
 
     def ss_within(vals: List[float]) -> float:
@@ -745,10 +715,6 @@ def main() -> None:
     data = load_bank_data()
     current = list(data)
 
-    # Example of higher-order function usage (not used in main flow):
-    # high_balance_filter = create_balance_filter(1000.0)
-    # high_balance_customers = list(filter(high_balance_filter, current))
-
     print(_header("BANK MARKETING – CLI"))
     print(f"Datensätze geladen: {len(data)}")
 
@@ -758,171 +724,158 @@ def main() -> None:
             print("Bye")
             return
 
-        if choice == "1":
-            print(_header("ERFOLGSQUOTE"))
-            total, yes_count, quote = _success_overall(current)
-            rows = [["Total", str(total)], ["Yes", str(yes_count)], ["Quote", _fmt_pct(quote)]]
-            print(_table(["Metric", "Value"], rows, aligns=["<", ">"]))
+        # Pattern matching with match/case (requires Python 3.10+)
+        # More structured and readable than if/elif chains for menu handling
+        match choice:
+            case "1":
+                print(_header("ERFOLGSQUOTE"))
+                total, yes_count, quote = _success_overall(current)
+                rows = [["Total", str(total)], ["Yes", str(yes_count)], ["Quote", _fmt_pct(quote)]]
+                print(_table(["Metric", "Value"], rows, aligns=["<", ">"]))
 
-        elif choice == "2":
-            housing, loan, balance_gt = _prompt_filters()
-            
-            # Functional composition pattern: Build predicates dynamically
-            # Each predicate is a pure function that takes a record and returns bool
-            predicates = []
-            
-            # Add housing predicate if specified
-            # Use default parameter to capture value (avoids late binding issue)
-            if housing is not None:
-                predicates.append(lambda r, h=housing: r.get("housing") is h)
-            
-            # Add loan predicate if specified
-            # Use default parameter to capture value (avoids late binding issue)
-            if loan is not None:
-                predicates.append(lambda r, l=loan: r.get("loan") is l)
-            
-            # Use create_balance_filter higher-order function for balance threshold
-            # This demonstrates function factory pattern - returns a configured predicate
-            if balance_gt is not None:
-                predicates.append(create_balance_filter(balance_gt))
-            
-            # Compose predicates using combine_predicates if any filters were specified
-            # combine_predicates returns a single predicate that applies AND logic
-            if predicates:
-                combined_filter = combine_predicates(*predicates)
-                current = list(filter(combined_filter, data))
-            else:
-                # No filters specified, use all data
-                current = list(data)
-            
-            print(_header("FILTER RESULT"))
-            print(f"Aktueller Datenbestand: {len(current)} / {len(data)}")
-
-        elif choice == "3":
-            print(_header("TRANSFORMATIONEN"))
-            
-            # Define reusable pipeline components
-            # Step 1: Filter records with valid balance (int or float)
-            filter_valid_balance = lambda records: filter(
-                lambda r: isinstance(r.get("balance"), (int, float)), 
-                records
-            )
-            # Step 2: Extract balance values and convert to float
-            extract_balances = lambda records: map(
-                lambda r: float(r["balance"]), 
-                records
-            )
-            # Step 3: Materialize the iterator into a list
-            to_list = lambda it: list(it)
-            
-            # Create a pipeline using pipe() for left-to-right composition
-            # Reads naturally: filter valid records -> extract balances -> collect to list
-            balance_pipeline = pipe(
-                filter_valid_balance,
-                extract_balances,
-                to_list
-            )
-            
-            # Execute the pipeline once to get base balance data
-            balances = balance_pipeline(current)
-            
-            # Define transformation pipelines using compose for each transformation
-            # Log transformation: balance -> log(balance) if positive, else None -> filter out Nones
-            log_transform_pipeline = pipe(
-                lambda vals: map(lambda b: math.log(b) if b > 0.0 else None, vals),
-                lambda vals: filter(lambda x: x is not None, vals),
-                to_list
-            )
-            
-            # Square + 1 transformation: balance -> balance^2 + 1
-            square_plus_one_pipeline = pipe(
-                lambda vals: map(lambda b: b * b + 1.0, vals),
-                to_list
-            )
-            
-            # Apply transformations using the pipelines
-            logs = log_transform_pipeline(balances)
-            sq1 = square_plus_one_pipeline(balances)
-
-            def stats_line(name: str, values: List[float]) -> List[str]:
-                mu = _mean(values)
-                var = _variance_population(values)
-                mn = min(values) if values else None
-                mx = max(values) if values else None
-                return [name, str(len(values)), _fmt_num(mn), _fmt_num(mx), _fmt_num(mu), _fmt_num(var)]
-
-            rows = [stats_line("log(balance)", list(map(float, logs))), stats_line("balance^2+1", sq1)]
-            print(_table(["Transform", "n", "min", "max", "mean", "var"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
-
-        elif choice == "4":
-            print(_header("DURATION ANALYSE"))
-            mn, mx, mu, var = _duration_stats(current)
-            rows = [[_fmt_int(mn), _fmt_int(mx), _fmt_num(mu), _fmt_num(var)]]
-            print(_table(["min", "max", "mean", "var"], rows, aligns=[">", ">", ">", ">"]))
-
-            do_buckets = input("Buckets anzeigen? (y/n): ").strip().lower() == "y"
-            if do_buckets:
-                bucket_size = _prompt_bucket_size()
-                buckets = _duration_buckets(current, bucket_size)
-                b_rows = list(map(lambda t: [t[0], str(t[1]), _fmt_pct(t[2])], buckets))
-                print(_header("DURATION BUCKETS"))
-                print(_table(["bucket", "count", "success"], b_rows, aligns=["<", ">", ">"]))
-
-        elif choice == "5":
-            print(_header("GROUP BY EDUCATION"))
-            metrics = _group_metrics(current, "education")
-            rows = list(
-                map(
-                    lambda t: [t[0] or "(blank)", str(t[1]), _fmt_num(t[2], 1), _fmt_num(t[3], 2), _fmt_pct(t[4])],
-                    metrics,
-                )
-            )
-            print(_table(["education", "count", "avg(age)", "avg(balance)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
-
-        elif choice == "6":
-            print(_header("GROUP BY MARITAL"))
-            metrics = _marital_compare(current)
-            rows = list(map(lambda t: [t[0], str(t[1]), _fmt_num(t[2], 2), _fmt_num(t[3], 1), _fmt_pct(t[4])], metrics))
-            print(_table(["marital", "count", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
-
-        elif choice == "7":
-            print(_header("VERGLEICH ZWEIER GRUPPEN"))
-            field = _prompt_group_field("education")
-            available = sorted({(r.get(field) or "") for r in current})
-            g1, g2 = _prompt_group_names(available)
-            m1, m2 = _compare_two_groups(current, field, g1, g2)
-
-            def row(m: Tuple[str, int, Optional[float], Optional[float], Optional[float], float]) -> List[str]:
-                name, cnt, avg_age, avg_bal, avg_dur, rate = m
-                return [name or "(blank)", str(cnt), _fmt_num(avg_age, 1), _fmt_num(avg_bal, 2), _fmt_num(avg_dur, 1), _fmt_pct(rate)]
-
-            rows = [row(m1), row(m2)]
-            print(_table([field, "count", "avg(age)", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
-            delta = m1[-1] - m2[-1]
-            sign = "+" if delta >= 0 else ""
-            print(f"Δ Erfolgsquote (A-B): {sign}{delta * 100:0.1f}%")
-
-        elif choice == "8":
-            print(_header("ANOVA-ÄHNLICHER F-WERT (BALANCE)"))
-            field = _prompt_group_field("education")
-            result = _anova_f_balance(current, field)
-            if result is None:
-                print("Nicht genug Daten für F-Berechnung (mind. 2 Gruppen, ausreichend Beobachtungen).")
-            else:
-                f_value, dfb, dfw = result
-                f_text = "inf" if math.isinf(f_value) else f"{f_value:0.3f}"
-                print(f"F({dfb}, {dfw}) = {f_text}")
-                if math.isinf(f_value):
-                    print("Interpretation: Innerhalb-Varianz ist 0; Gruppenmittelwerte unterscheiden sich stark oder Werte sind konstant pro Gruppe.")
-                elif f_value < 1.5:
-                    print("Interpretation: Eher geringe Unterschiede der Mittelwerte zwischen Gruppen (relativ zur Streuung).")
-                elif f_value < 5.0:
-                    print("Interpretation: Moderate Unterschiede der Mittelwerte zwischen Gruppen.")
+            case "2":
+                housing, loan, balance_gt = _prompt_filters()
+                
+                # Build predicates dynamically using functional composition
+                predicates = []
+                
+                if housing is not None:
+                    predicates.append(lambda r, h=housing: r.get("housing") is h)
+                
+                if loan is not None:
+                    predicates.append(lambda r, l=loan: r.get("loan") is l)
+                
+                if balance_gt is not None:
+                    predicates.append(create_balance_filter(balance_gt))
+                
+                # Compose all predicates with AND logic
+                if predicates:
+                    combined_filter = combine_predicates(*predicates)
+                    current = list(filter(combined_filter, data))
                 else:
-                    print("Interpretation: Deutliche Unterschiede der Mittelwerte zwischen Gruppen möglich (hoher F-Wert).")
+                    current = list(data)
+                
+                print(_header("FILTER RESULT"))
+                print(f"Aktueller Datenbestand: {len(current)} / {len(data)}")
 
-        else:
-            print("Ungültige Auswahl")
+            case "3":
+                print(_header("TRANSFORMATIONEN"))
+                
+                # Define reusable pipeline components
+                filter_valid_balance = lambda records: filter(
+                    lambda r: isinstance(r.get("balance"), (int, float)), 
+                    records
+                )
+                extract_balances = lambda records: map(
+                    lambda r: float(r["balance"]), 
+                    records
+                )
+                to_list = lambda it: list(it)
+                
+                # Pipeline: filter -> extract -> collect
+                balance_pipeline = pipe(
+                    filter_valid_balance,
+                    extract_balances,
+                    to_list
+                )
+                
+                balances = balance_pipeline(current)
+                
+                # Log transformation pipeline
+                log_transform_pipeline = pipe(
+                    lambda vals: map(lambda b: math.log(b) if b > 0.0 else None, vals),
+                    lambda vals: filter(lambda x: x is not None, vals),
+                    to_list
+                )
+                
+                # Square + 1 transformation pipeline
+                square_plus_one_pipeline = pipe(
+                    lambda vals: map(lambda b: b * b + 1.0, vals),
+                    to_list
+                )
+                
+                logs = log_transform_pipeline(balances)
+                sq1 = square_plus_one_pipeline(balances)
+
+                def stats_line(name: str, values: List[float]) -> List[str]:
+                    mu = _mean(values)
+                    var = _variance_population(values)
+                    mn = min(values) if values else None
+                    mx = max(values) if values else None
+                    return [name, str(len(values)), _fmt_num(mn), _fmt_num(mx), _fmt_num(mu), _fmt_num(var)]
+
+                rows = [stats_line("log(balance)", list(map(float, logs))), stats_line("balance^2+1", sq1)]
+                print(_table(["Transform", "n", "min", "max", "mean", "var"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
+
+            case "4":
+                print(_header("DURATION ANALYSE"))
+                mn, mx, mu, var = _duration_stats(current)
+                rows = [[_fmt_int(mn), _fmt_int(mx), _fmt_num(mu), _fmt_num(var)]]
+                print(_table(["min", "max", "mean", "var"], rows, aligns=[">", ">", ">", ">"]))
+
+                do_buckets = input("Buckets anzeigen? (y/n): ").strip().lower() == "y"
+                if do_buckets:
+                    bucket_size = _prompt_bucket_size()
+                    buckets = _duration_buckets(current, bucket_size)
+                    b_rows = list(map(lambda t: [t[0], str(t[1]), _fmt_pct(t[2])], buckets))
+                    print(_header("DURATION BUCKETS"))
+                    print(_table(["bucket", "count", "success"], b_rows, aligns=["<", ">", ">"]))
+
+            case "5":
+                print(_header("GROUP BY EDUCATION"))
+                metrics = _group_metrics(current, "education")
+                rows = list(
+                    map(
+                        lambda t: [t[0] or "(blank)", str(t[1]), _fmt_num(t[2], 1), _fmt_num(t[3], 2), _fmt_pct(t[4])],
+                        metrics,
+                    )
+                )
+                print(_table(["education", "count", "avg(age)", "avg(balance)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
+
+            case "6":
+                print(_header("GROUP BY MARITAL"))
+                metrics = _marital_compare(current)
+                rows = list(map(lambda t: [t[0], str(t[1]), _fmt_num(t[2], 2), _fmt_num(t[3], 1), _fmt_pct(t[4])], metrics))
+                print(_table(["marital", "count", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
+
+            case "7":
+                print(_header("VERGLEICH ZWEIER GRUPPEN"))
+                field = _prompt_group_field("education")
+                available = sorted({(r.get(field) or "") for r in current})
+                g1, g2 = _prompt_group_names(available)
+                m1, m2 = _compare_two_groups(current, field, g1, g2)
+
+                def row(m: Tuple[str, int, Optional[float], Optional[float], Optional[float], float]) -> List[str]:
+                    name, cnt, avg_age, avg_bal, avg_dur, rate = m
+                    return [name or "(blank)", str(cnt), _fmt_num(avg_age, 1), _fmt_num(avg_bal, 2), _fmt_num(avg_dur, 1), _fmt_pct(rate)]
+
+                rows = [row(m1), row(m2)]
+                print(_table([field, "count", "avg(age)", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
+                delta = m1[-1] - m2[-1]
+                sign = "+" if delta >= 0 else ""
+                print(f"Δ Erfolgsquote (A-B): {sign}{delta * 100:0.1f}%")
+
+            case "8":
+                print(_header("ANOVA-ÄHNLICHER F-WERT (BALANCE)"))
+                field = _prompt_group_field("education")
+                result = _anova_f_balance(current, field)
+                if result is None:
+                    print("Nicht genug Daten für F-Berechnung (mind. 2 Gruppen, ausreichend Beobachtungen).")
+                else:
+                    f_value, dfb, dfw = result
+                    f_text = "inf" if math.isinf(f_value) else f"{f_value:0.3f}"
+                    print(f"F({dfb}, {dfw}) = {f_text}")
+                    if math.isinf(f_value):
+                        print("Interpretation: Innerhalb-Varianz ist 0; Gruppenmittelwerte unterscheiden sich stark oder Werte sind konstant pro Gruppe.")
+                    elif f_value < 1.5:
+                        print("Interpretation: Eher geringe Unterschiede der Mittelwerte zwischen Gruppen (relativ zur Streuung).")
+                    elif f_value < 5.0:
+                        print("Interpretation: Moderate Unterschiede der Mittelwerte zwischen Gruppen.")
+                    else:
+                        print("Interpretation: Deutliche Unterschiede der Mittelwerte zwischen Gruppen möglich (hoher F-Wert).")
+
+            case _:
+                print("Ungültige Auswahl")
 
 
 if __name__ == "__main__":
