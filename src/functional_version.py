@@ -432,17 +432,19 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
     5. reduce() with step function that returns NEW tuples (truly immutable)
     6. map() to transform raw counts into formatted output tuples
     
-    Pure functional accumulator pattern: Unlike the previous implementation that
-    mutated list elements in-place (acc[i][0] += 1), this version creates entirely
-    new tuples at each reduction step. The step function never modifies existing
-    data structures - it constructs a fresh tuple by copying unchanged buckets and
-    creating a new tuple for the updated bucket. This is more purely functional
-    because it maintains referential transparency: the same input always produces
-    the same output without side effects. While less efficient for large datasets,
-    it better demonstrates immutability principles central to functional programming.
-    
     No explicit loop indices or manual counter increments - each transformation
     is expressed as a data pipeline operation.
+    
+    Performance Note:
+    The immutable tuple accumulator creates O(n) copies per reduction step
+    (where n is the number of buckets). With m records in the dataset, the total
+    time complexity is O(n × m) = O(n²) when n and m are of similar magnitude.
+    This is intentional to demonstrate pure functional immutability principles:
+    the step function never mutates existing data structures, instead returning
+    entirely new tuples. For production use with large datasets, a hybrid approach
+    using list mutation would be more efficient (O(m) time with in-place updates).
+    This implementation prioritizes educational clarity and functional purity over
+    runtime performance.
     
     Args:
         data: List of bank records with 'duration' and 'complete' fields
@@ -515,6 +517,18 @@ def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, Tuple[Dict[
     - Thread-safe: No shared mutable state to cause race conditions
     - Easier debugging: Each reduction step creates new state, preserving history
     - True functional purity: Aligns with functional programming principles
+    
+    Performance Considerations:
+    The dict unpacking {**acc, key: value} creates a new dictionary on each
+    iteration, copying all existing key-value pairs. For n records, this results
+    in O(n²) time complexity due to repeated copying of the growing dictionary.
+    Additionally, the tuple concatenation (existing_group + (row,)) creates a new
+    tuple for each group on every update. This demonstrates pure functional
+    immutability principles but is not optimal for large datasets. Python's
+    dict.setdefault() or collections.defaultdict with list.append() would achieve
+    O(n) time complexity but would mutate state, sacrificing functional purity.
+    In languages like Haskell, persistent data structures (using structural
+    sharing) would make this pattern efficient without sacrificing immutability.
     
     Groups are stored as tuples (immutable) rather than lists, reinforcing the
     immutable nature of the data structure throughout. The tuple concatenation
@@ -761,50 +775,77 @@ def main() -> None:
             case "3":
                 print(_header("TRANSFORMATIONEN"))
                 
-                # Define reusable pipeline components
-                filter_valid_balance = lambda records: filter(
-                    lambda r: isinstance(r.get("balance"), (int, float)), 
-                    records
-                )
-                extract_balances = lambda records: map(
-                    lambda r: float(r["balance"]), 
-                    records
-                )
-                to_list = lambda it: list(it)
+                # Declarative Pipeline Composition Demonstration:
+                # Each analysis is expressed as "WHAT to compute" rather than "HOW to compute it".
+                # The pipe() function chains transformations: data -> filter -> extract -> transform -> analyze -> format
+                # This makes the data flow explicit and eliminates intermediate variables.
                 
-                # Pipeline: filter -> extract -> collect
+                # Base pipeline: Extract valid balance values from records
                 balance_pipeline = pipe(
-                    filter_valid_balance,
-                    extract_balances,
-                    to_list
+                    lambda records: filter(  # Keep only records with numeric balance
+                        lambda r: isinstance(r.get("balance"), (int, float)), 
+                        records
+                    ),
+                    lambda records: map(lambda r: float(r["balance"]), records),  # Extract as floats
+                    lambda it: list(it)  # Materialize lazy iterators
                 )
                 
-                balances = balance_pipeline(current)
-                
-                # Log transformation pipeline
+                # Transformation pipeline: Apply logarithmic transformation (handles zeros/negatives)
                 log_transform_pipeline = pipe(
-                    lambda vals: map(lambda b: math.log(b) if b > 0.0 else None, vals),
-                    lambda vals: filter(lambda x: x is not None, vals),
-                    to_list
+                    lambda vals: map(lambda b: math.log(b) if b > 0.0 else None, vals),  # log(x) for x > 0
+                    lambda vals: filter(lambda x: x is not None, vals),  # Remove invalid results
+                    lambda it: list(it)
                 )
                 
-                # Square + 1 transformation pipeline
+                # Transformation pipeline: Apply polynomial transformation (always valid)
                 square_plus_one_pipeline = pipe(
-                    lambda vals: map(lambda b: b * b + 1.0, vals),
-                    to_list
+                    lambda vals: map(lambda b: b * b + 1.0, vals),  # x² + 1 for all values
+                    lambda it: list(it)
                 )
                 
-                logs = log_transform_pipeline(balances)
-                sq1 = square_plus_one_pipeline(balances)
-
-                def stats_line(name: str, values: List[float]) -> List[str]:
-                    mu = _mean(values)
-                    var = _variance_population(values)
-                    mn = min(values) if values else None
-                    mx = max(values) if values else None
-                    return [name, str(len(values)), _fmt_num(mn), _fmt_num(mx), _fmt_num(mu), _fmt_num(var)]
-
-                rows = [stats_line("log(balance)", list(map(float, logs))), stats_line("balance^2+1", sq1)]
+                # Higher-order function: Creates a stats computation pipeline for a named transformation
+                def create_stats_pipeline(name: str):
+                    """Returns pipeline: values -> statistics dict -> formatted table row"""
+                    return pipe(
+                        # Compute all statistics declaratively (no intermediate variables)
+                        lambda vals: {
+                            'name': name,
+                            'count': len(vals),
+                            'min': min(vals) if vals else None,
+                            'max': max(vals) if vals else None,
+                            'mean': _mean(vals),
+                            'var': _variance_population(vals)
+                        },
+                        # Transform stats dict into formatted strings for table display
+                        lambda stats: [
+                            stats['name'],
+                            str(stats['count']),
+                            _fmt_num(stats['min']),
+                            _fmt_num(stats['max']),
+                            _fmt_num(stats['mean']),
+                            _fmt_num(stats['var'])
+                        ]
+                    )
+                
+                # Compose complete analysis pipelines by chaining: extract -> transform -> analyze -> format
+                log_analysis_pipeline = pipe(
+                    balance_pipeline,              # records -> balances
+                    log_transform_pipeline,        # balances -> log(balances)
+                    create_stats_pipeline("log(balance)")  # log values -> formatted row
+                )
+                
+                square_analysis_pipeline = pipe(
+                    balance_pipeline,              # records -> balances
+                    square_plus_one_pipeline,      # balances -> balance^2 + 1
+                    create_stats_pipeline("balance^2+1")  # squared values -> formatted row
+                )
+                
+                # Execute both analysis pipelines in parallel (no shared state or side effects)
+                rows = [
+                    log_analysis_pipeline(current),
+                    square_analysis_pipeline(current)
+                ]
+                
                 print(_table(["Transform", "n", "min", "max", "mean", "var"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
 
             case "4":

@@ -157,9 +157,13 @@ def _mean(values: List[float]) -> Optional[float]:
     if not values:
         return None
     s = 0.0
+    n = 0
     for v in values:
         s += float(v)
-    return s / float(len(values))
+        n += 1
+    if n == 0:
+        return None
+    return s / float(n)
 
 
 def _variance_population(values: List[float]) -> Optional[float]:
