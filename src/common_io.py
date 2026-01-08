@@ -6,6 +6,7 @@ Authors: Peter Ngo, Alex Uscata
 Class: INA 23A
 Module: M323 - Functional Programming
 Date: 2026-01-06
+Version: 1.1.1
 
 This module provides shared input/output functionality for loading and parsing
 bank marketing data. It handles CSV file reading with automatic delimiter detection,

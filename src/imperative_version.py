@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-"""Bank Marketing Analysis - Imperative Implementation (V1.0)
+"""Bank Marketing Analysis - Imperative Implementation
 
 Authors: Peter Ngo, Alex Uscata
 Class: INA 23A
 Module: M323 - Functional Programming
 Date: 2026-01-06
+Version: 2.0.1
 
 This module implements a bank marketing data analysis tool using an imperative
 programming approach. The implementation emphasizes explicit control flow through
@@ -37,27 +38,90 @@ from common_io import load_bank_data, normalize_choice_yes_no, parse_balance_gt
 
 
 def _header(title: str) -> str:
+    """Create a formatted section header with centered title.
+    
+    Args:
+        title: Text to display centered in the header.
+    
+    Returns:
+        Formatted string with 72-char separator lines and centered title.
+    """
     line = "=" * 72
     return f"{line}\n{title.center(72)}\n{line}"
 
 
 def _fmt_pct(rate: float) -> str:
+    """Format a decimal rate as a percentage string.
+    
+    Args:
+        rate: Decimal rate between 0.0 and 1.0 (e.g., 0.123 = 12.3%).
+    
+    Returns:
+        Right-aligned percentage string with 1 decimal place (e.g., " 12.3%").
+    
+    Example:
+        >>> _fmt_pct(0.123)
+        ' 12.3%'
+    """
     return f"{rate * 100:5.1f}%"
 
 
 def _fmt_num(value: Optional[float], decimals: int = 2) -> str:
+    """Format a numeric value with specified decimal places.
+    
+    Args:
+        value: Number to format, or None for missing values.
+        decimals: Number of decimal places to display (default: 2).
+    
+    Returns:
+        Formatted number string, or "-" if value is None.
+    
+    Example:
+        >>> _fmt_num(3.14159, 2)
+        '3.14'
+        >>> _fmt_num(None)
+        '-'
+    """
     if value is None:
         return "-"
     return f"{value:.{decimals}f}"
 
 
 def _fmt_int(value: Optional[int]) -> str:
+    """Format an integer value as string.
+    
+    Args:
+        value: Integer to format, or None for missing values.
+    
+    Returns:
+        String representation of the integer, or "-" if value is None.
+    
+    Example:
+        >>> _fmt_int(42)
+        '42'
+        >>> _fmt_int(None)
+        '-'
+    """
     if value is None:
         return "-"
     return str(value)
 
 
 def _table(headers: Sequence[str], rows: Sequence[Sequence[str]], aligns: Optional[Sequence[str]] = None) -> str:
+    """Generate a formatted ASCII table with headers and aligned columns.
+    
+    Args:
+        headers: Column header strings.
+        rows: 2D sequence of cell values (list of lists/tuples).
+        aligns: Optional alignment specs ("<" left, ">" right, default: all left).
+    
+    Returns:
+        Formatted ASCII table string with separator line between header and rows.
+    
+    Example:
+        >>> _table(["Name", "Age"], [["Alice", "30"], ["Bob", "25"]])
+        'Name  | Age\\n------+----\\nAlice | 30\\nBob   | 25'
+    """
     aligns = aligns or ["<"] * len(headers)
     widths = [len(h) for h in headers]
     for row in rows:
@@ -122,6 +186,19 @@ def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Op
 
 
 def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
+    """Calculate overall campaign success metrics.
+    
+    Args:
+        data: List of bank marketing records (dicts with 'complete' field).
+    
+    Returns:
+        Tuple of (total_count, success_count, success_rate) where success_rate
+        is a float between 0.0 and 1.0. Success is complete=True.
+    
+    Example:
+        >>> _success_overall([{'complete': True}, {'complete': False}])
+        (2, 1, 0.5)
+    """
     total = 0
     yes_count = 0
     for row in data:
@@ -456,6 +533,11 @@ def _anova_f_balance(data: List[Dict[str, Any]], key: str) -> Optional[Tuple[flo
 
 
 def _prompt_filters() -> Tuple[Optional[bool], Optional[bool], Optional[float]]:
+    """Prompt user for filter criteria (housing, loan, balance threshold).
+    
+    Returns:
+        Tuple of (housing, loan, balance_gt) where None means no filter.
+    """
     print(_header("FILTER"))
     print("Leerlassen = kein Filter / unverändert")
     housing = normalize_choice_yes_no(input("housing (yes/no): "))
@@ -465,6 +547,11 @@ def _prompt_filters() -> Tuple[Optional[bool], Optional[bool], Optional[float]]:
 
 
 def _prompt_bucket_size() -> int:
+    """Prompt user for duration bucket size in seconds.
+    
+    Returns:
+        Bucket size in seconds (default: 60 if invalid input).
+    """
     raw = input("Bucket-Größe für duration (Sekunden, Default 60): ").strip()
     if raw == "":
         return 60
@@ -476,6 +563,11 @@ def _prompt_bucket_size() -> int:
 
 
 def _prompt_group_field(default: str) -> str:
+    """Prompt user to select grouping field (education/marital/job).
+    
+    Returns:
+        Selected field name or default if invalid input.
+    """
     raw = input(f"Gruppierungsfeld (education/marital/job) [Default: {default}]: ").strip().lower()
     if raw in {"education", "marital", "job"}:
         return raw
@@ -483,6 +575,11 @@ def _prompt_group_field(default: str) -> str:
 
 
 def _prompt_group_names(available: List[str]) -> Tuple[str, str]:
+    """Prompt user to select two groups for comparison.
+    
+    Returns:
+        Tuple of (group_a, group_b) names as entered by user.
+    """
     print("Verfügbare Gruppen:")
     print(", ".join(available) if available else "-")
     g1 = input("Gruppe A: ").strip()
@@ -491,6 +588,11 @@ def _prompt_group_names(available: List[str]) -> Tuple[str, str]:
 
 
 def _menu() -> str:
+    """Display main menu and return user's choice.
+    
+    Returns:
+        User's menu selection as string ("1"-"8" or "q").
+    """
     print(_header("MENU"))
     print("1) Erfolgsquote gesamt")
     print("2) Filter setzen (housing/loan/balance>X)")
