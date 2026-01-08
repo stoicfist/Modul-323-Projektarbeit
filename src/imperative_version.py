@@ -34,112 +34,16 @@ import math
 import os
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from common_io import load_bank_data, normalize_choice_yes_no, parse_balance_gt
-
-
-def _header(title: str) -> str:
-    """Create a formatted section header with centered title.
-    
-    Args:
-        title: Text to display centered in the header.
-    
-    Returns:
-        Formatted string with 72-char separator lines and centered title.
-    """
-    line = "=" * 72
-    return f"{line}\n{title.center(72)}\n{line}"
-
-
-def _fmt_pct(rate: float) -> str:
-    """Format a decimal rate as a percentage string.
-    
-    Args:
-        rate: Decimal rate between 0.0 and 1.0 (e.g., 0.123 = 12.3%).
-    
-    Returns:
-        Right-aligned percentage string with 1 decimal place (e.g., " 12.3%").
-    
-    Example:
-        >>> _fmt_pct(0.123)
-        ' 12.3%'
-    """
-    return f"{rate * 100:5.1f}%"
-
-
-def _fmt_num(value: Optional[float], decimals: int = 2) -> str:
-    """Format a numeric value with specified decimal places.
-    
-    Args:
-        value: Number to format, or None for missing values.
-        decimals: Number of decimal places to display (default: 2).
-    
-    Returns:
-        Formatted number string, or "-" if value is None.
-    
-    Example:
-        >>> _fmt_num(3.14159, 2)
-        '3.14'
-        >>> _fmt_num(None)
-        '-'
-    """
-    if value is None:
-        return "-"
-    return f"{value:.{decimals}f}"
-
-
-def _fmt_int(value: Optional[int]) -> str:
-    """Format an integer value as string.
-    
-    Args:
-        value: Integer to format, or None for missing values.
-    
-    Returns:
-        String representation of the integer, or "-" if value is None.
-    
-    Example:
-        >>> _fmt_int(42)
-        '42'
-        >>> _fmt_int(None)
-        '-'
-    """
-    if value is None:
-        return "-"
-    return str(value)
-
-
-def _table(headers: Sequence[str], rows: Sequence[Sequence[str]], aligns: Optional[Sequence[str]] = None) -> str:
-    """Generate a formatted ASCII table with headers and aligned columns.
-    
-    Args:
-        headers: Column header strings.
-        rows: 2D sequence of cell values (list of lists/tuples).
-        aligns: Optional alignment specs ("<" left, ">" right, default: all left).
-    
-    Returns:
-        Formatted ASCII table string with separator line between header and rows.
-    
-    Example:
-        >>> _table(["Name", "Age"], [["Alice", "30"], ["Bob", "25"]])
-        'Name  | Age\\n------+----\\nAlice | 30\\nBob   | 25'
-    """
-    aligns = aligns or ["<"] * len(headers)
-    widths = [len(h) for h in headers]
-    for row in rows:
-        for i, cell in enumerate(row):
-            widths[i] = max(widths[i], len(cell))
-
-    def fmt_row(items: Sequence[str]) -> str:
-        parts = []
-        for i, cell in enumerate(items):
-            spec = aligns[i]
-            parts.append(f"{cell:{spec}{widths[i]}}")
-        return " | ".join(parts)
-
-    sep = "-+-".join("-" * w for w in widths)
-    out = [fmt_row(headers), sep]
-    for row in rows:
-        out.append(fmt_row(row))
-    return "\n".join(out)
+from common_io import (
+    _fmt_int,
+    _fmt_num,
+    _fmt_pct,
+    _header,
+    _table,
+    load_bank_data,
+    normalize_choice_yes_no,
+    parse_balance_gt,
+)
 
 
 def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
