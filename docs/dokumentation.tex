@@ -12,7 +12,9 @@
 \usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{listings}
+\usepackage{parskip}
 \usepackage{xcolor}
+\usepackage{tocloft}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
@@ -23,6 +25,9 @@
 
 \geometry{margin=2.5cm}
 \onehalfspacing
+\setlength{\parindent}{0pt}
+\setcounter{tocdepth}{4}
+
 
 % --- Darkmode Farben für Code ---
 \definecolor{codebg}{HTML}{0B0F14}      % sehr dunkles Blau-Schwarz
@@ -100,6 +105,11 @@ Bank, welcher Kundendaten sowie den Erfolg einer Marketingkampagne enthält.
 Beide Programmversionen erzeugen denselben Output, unterscheiden sich jedoch
 grundlegend in der Programmierweise.
 
+\medskip
+Die verwendeten Daten werden in Abschnitt~\ref{sec:datengrundlage}
+beschrieben. Der Einfluss funktionaler Sprachelemente wird anschließend
+im Refactoring-Vergleich in Abschnitt~\ref{sec:refactoring} analysiert.
+
 % ======================================================
 \section{Wahl der imperativen Programmiersprache}
 
@@ -152,6 +162,68 @@ reduce(lambda acc, x: acc + x, [1,2,3], 0)  # -> 6
 
 
 % ======================================================
+\section{Datengrundlage}
+\label{sec:datengrundlage}
+
+\subsection{Beschreibung des Datensatzes}
+
+Als Datengrundlage dient ein Bank-Marketing-Datensatz einer portugiesischen Bank,
+der auf einer öffentlich dokumentierten Bank-Marketing-Studie basiert
+(vgl.~\cite{moro2011}).
+Der Datensatz enthält Kundendaten aus einer Marketingkampagne sowie eine Zielvariable,
+welche angibt, ob ein Produktabschluss erfolgt ist (\texttt{complete = yes/no}).
+
+Die Daten liegen in Form einer CSV-Datei vor und wurden im Projekt ausschließlich
+lesend verwendet.
+
+\subsection{Hauptdimensionen}
+
+Der Datensatz lässt sich in folgende Hauptdimensionen einteilen:
+
+\begin{itemize}
+    \item \textbf{Demografie:} Alter (\texttt{age}), Bildungsstand (\texttt{education}), Familienstand (\texttt{marital})
+    \item \textbf{Finanzen:} Kontostand (\texttt{balance})
+    \item \textbf{Kontaktdaten:} Gesprächsdauer (\texttt{duration})
+    \item \textbf{Ergebnisvariable:} Produktabschluss (\texttt{complete})
+\end{itemize}
+
+\subsection{Verwendete Variablen}
+
+Im Projekt werden unter anderem folgende Variablen verwendet:
+
+\begin{itemize}
+    \item \texttt{age} (numerisch)
+    \item \texttt{job} (kategorisch)
+    \item \texttt{marital} (kategorisch)
+    \item \texttt{education} (kategorisch)
+    \item \texttt{balance} (numerisch)
+    \item \texttt{housing} (binär)
+    \item \texttt{loan} (binär)
+    \item \texttt{duration} (numerisch)
+    \item \texttt{complete} (binär, Zielvariable)
+\end{itemize}
+
+\subsection{Herkunft des Datensatzes und Abgrenzung}
+
+Der im Projekt verwendete Bank-Marketing-Datensatz stammt ursprünglich aus
+einer universitären Lehrveranstaltung zur multivariaten Datenanalyse an der
+Universität Basel (vgl.~\cite{unibas-assignment}).
+Der Datensatz wurde im Rahmen eines Assignments zur statistischen Auswertung
+von Bank-Marketingkampagnen eingesetzt und basiert auf realitätsnahen,
+vorverarbeiteten Kundendaten einer portugiesischen Bank.
+
+Die Aufgabenstellung des ursprünglichen Assignments umfasste unter anderem
+Varianzanalysen, logaritmische Transformationen sowie Klassifikationsverfahren.
+In diesem Projekt wird der Datensatz jedoch ausschließlich als Datengrundlage
+verwendet und in einen neuen Kontext übertragen.
+
+Die Zielsetzung dieses Projekts unterscheidet sich bewusst von der ursprünglichen
+universitären Aufgabenstellung:
+Der Fokus liegt nicht auf statistischer Modellbildung oder Inferenz,
+sondern auf dem Vergleich imperativer und funktionaler Programmierparadigmen
+im Sinne des Moduls M323 – Funktionales Programmieren.
+
+% ======================================================
 \section{Projektantrag}
 
 \subsection{Ausgangslage}
@@ -194,29 +266,59 @@ Die Ausgabe erfolgt textbasiert in der Konsole.
 
 \subsection{Beispielhafter Output}
 
-\begin{lstlisting}
-===========================
-Bankkampagne – Erfolgsquote
+Das folgende Beispiel zeigt die Konsolenausgabe der Auswertungsfunktion
+\textit{Group by Education} (Menüoption 5).
+Dabei werden alle Datensätze nach Bildungsniveau gruppiert und aggregierte
+Kennzahlen berechnet, darunter die Anzahl der Kunden, das durchschnittliche
+Alter, der durchschnittliche Kontostand sowie die Erfolgsquote der
+Marketingkampagne.
 
-Anzahl Kunden: 4521
-Abschlüsse (yes): 512
-Erfolgsquote: 11.3 %
+Die dargestellte Ausgabe wird sowohl von Version~1.0 (imperative Umsetzung)
+als auch von Version~2.0 (funktionale Umsetzung) identisch erzeugt.
 
-===========================
-Vergleich nach Education
+\begin{verbatim}
+                           GROUP BY EDUCATION
+========================================================================
+education | count | avg(age) | avg(balance) | success
+----------+-------+----------+--------------+--------
+primary   |  1002 |     49.0 |      1970.88 |   48.3%
+secondary |  3815 |     40.7 |      1709.54 |   52.2%
+tertiary  |  2657 |     39.7 |      2404.61 |   62.5%
 
-primary   | Ø Balance: 850  | Erfolgsquote: 8.5 %
-secondary | Ø Balance: 1200 | Erfolgsquote: 10.1 %
-tertiary  | Ø Balance: 1800 | Erfolgsquote: 14.3 %
-
-ANOVA F-Wert: 5.21
+ANOVA F-Wert: 41.93 (df=2,7471)
+\end{verbatim}
 \end{lstlisting}
 
 \textit{Hinweis:} Version 1.0 (imperativ) und Version 2.0 (funktional)
 liefern identische Resultate.
 
+\subsection{Interpretation der Ergebnisse}
+
+\subsection{Interpretation und statistische Einordnung}
+
+Die Ergebnisse zeigen, dass der durchschnittliche Kontostand sowie die
+Erfolgsquote mit steigendem Bildungsniveau zunehmen.
+Kunden mit tertiärer Ausbildung weisen sowohl den höchsten durchschnittlichen
+Kontostand als auch die höchste Erfolgsquote auf.
+
+Zur Bewertung der Unterschiede zwischen den Bildungsgruppen wird eine
+einfaktorielle Varianzanalyse (ANOVA) verwendet.
+Der ANOVA-F-Wert beschreibt das Verhältnis der Varianz zwischen den Gruppen
+zur Varianz innerhalb der Gruppen.
+Der hohe F-Wert deutet darauf hin, dass sich die Mittelwerte der Gruppen
+deutlich voneinander unterscheiden und die Varianz zwischen den
+Bildungsgruppen größer ist als die Varianz innerhalb der Gruppen.
+
+Die angegebenen Freiheitsgrade (df) geben an, wie viele unabhängige
+Informationen in die Berechnung eingeflossen sind.
+Dabei beschreibt $df_{between}$ die Anzahl der verglichenen Gruppen minus eins,
+während $df_{within}$ die Streuung der Werte innerhalb der Gruppen widerspiegelt
+\cite{montgomery2017}.
+
+
 % ======================================================
 \section{Refactoring: Vergleich Version 1.0 vs. Version 2.0}
+\label{sec:refactoring}
 
 Beide Programmversionen implementieren dieselben Produktfunktionen und erzeugen identische Resultate, unterscheiden sich jedoch in der Umsetzung:
 Version 1.0 verwendet primär imperative Sprachmittel (Schleifen, Hilfsvariablen, schrittweiser Aufbau von Resultaten),
@@ -224,54 +326,123 @@ während Version 2.0 die gleiche Logik mit funktionalen Sprachmitteln (z.\,B. \t
 
 \subsection{Konkrete Beispiele aus dem Projekt}
 
-\paragraph{Beispiel A: Filtern von Datensätzen}
+\subsubsection{Beispiel A: Filtern von Datensätzen}
 In Version 1.0 wird die Filterlogik mit einer Schleife und \texttt{continue} umgesetzt.
 In Version 2.0 wird dieselbe Logik deklarativ als Prädikatfunktion formuliert und per \texttt{filter} angewendet.
 
-\begin{lstlisting}[language=Python]
-# V1.0 (imperativ) - skizziert
-out = []
-for row in data:
-    if housing is not None and row["housing"] is not housing:
-        continue
-    if loan is not None and row["loan"] is not loan:
-        continue
-    out.append(row)
-
-# V2.0 (funktional) - skizziert
-def pred(row):
-    ...
-    return True/False
-
-out = list(filter(pred, data))
-\end{lstlisting}
-
-\paragraph{Beispiel B: Aggregation (Tabellenbreiten via reduce)}
-Für die tabellarische Ausgabe werden in Version 2.0 Spaltenbreiten über ein \texttt{reduce}-Faltungsmuster berechnet,
-während Version 1.0 die Breiten schrittweise in Schleifen aktualisiert.
+\paragraph{Imperative Umsetzung (Version 1.0)}\mbox{}
 
 \begin{lstlisting}[language=Python]
-# V2.0 (funktional) - skizziert
-widths = reduce(update_widths, rows, widths_init)
+def _apply_filters(data, housing, loan, balance_gt):
+    out = []
+    for row in data:
+        if housing is not None and row.get("housing") is not housing:
+            continue
+        if loan is not None and row.get("loan") is not loan:
+            continue
+        bal = row.get("balance")
+        if balance_gt is not None:
+            if bal is None or bal <= balance_gt:
+                continue
+        out.append(row)
+    return out
 \end{lstlisting}
 
-\paragraph{Beispiel C: Transformation numerischer Werte (map)}
-Transformationen wie \texttt{balance\^{}2 + 1} werden in Version 2.0 direkt als Abbildung über die Liste beschrieben
-(\texttt{map} + Lambda), während Version 1.0 die Werte typischerweise in einer Schleife sammelt.
+
+\paragraph{Funktionale Umsetzung (Version 2.0)}\mbox{}
 
 \begin{lstlisting}[language=Python]
-# V2.0 (funktional) - skizziert
-sq1 = list(map(lambda b: b*b + 1.0, balances))
+def _apply_filters(data, housing, loan, balance_gt):
+    def pred(row):
+        if housing is not None and row.get("housing") is not housing:
+            return False
+        if loan is not None and row.get("loan") is not loan:
+            return False
+        if balance_gt is not None:
+            bal = row.get("balance")
+            if bal is None or bal <= balance_gt:
+                return False
+        return True
+
+    return list(filter(pred, data))
 \end{lstlisting}
 
-\subsection{Zusammenfassung der Unterschiede}
+In der funktionalen Variante wird die Filterbedingung in einer separaten Prädikatfunktion gekapselt.
+Dies ermöglicht eine deklarative Beschreibung der Filterlogik und vermeidet explizite Kontrollstrukturen.
+
+
+\subsubsection{Beispiel B: Aggregation (Tabellenbreiten)}
+
+Für die tabellarische Ausgabe müssen die maximalen Spaltenbreiten über alle Zeilen hinweg ermittelt werden.
+In Version 1.0 erfolgt dies schrittweise mittels Schleifen und veränderlicher Zustände.
+Version 2.0 verwendet hingegen eine funktionale Faltung (\texttt{reduce}), welche die Aggregation deklarativ beschreibt.
+
+\paragraph{Imperative Umsetzung (Version 1.0)}\mbox{}
+
+\begin{lstlisting}[language=Python]
+widths = [len(h) for h in headers]
+
+for row in rows:
+    for i, cell in enumerate(row):
+        if len(cell) > widths[i]:
+            widths[i] = len(cell)
+\end{lstlisting}
+
+\paragraph{Funktionale Umsetzung (Version 2.0)}\mbox{}
+
+\begin{lstlisting}[language=Python]
+widths = list(map(len, headers))
+
+def upd(acc, row):
+    return [max(acc[i], len(cell)) for i, cell in enumerate(row)]
+
+widths = reduce(upd, rows, widths)
+\end{lstlisting}
+
+Die funktionale Variante beschreibt die Aggregation als reine Abbildung vom bisherigen Akkumulator und einer Zeile auf einen neuen Akkumulator.
+Dadurch entfällt explizite Zustandsänderung, was die Logik klarer und leichter testbar macht.
+
+
+\subsubsection{Beispiel C: Transformation numerischer Werte (map)}
+
+Numerische Transformationen wie \texttt{balance\^{}2 + 1} werden in Version~1.0
+schrittweise in einer Schleife berechnet und in einer Liste gesammelt.
+Version~2.0 beschreibt dieselbe Operation deklarativ als Abbildung über alle Werte
+mittels \texttt{map} und einer Lambda-Funktion.
+
+\paragraph{Imperative Umsetzung (Version 1.0)}\mbox{}
+
+\begin{lstlisting}[language=Python]
+sq1 = []
+for row in current:
+    bal = row.get("balance")
+    if isinstance(bal, (int, float)):
+        b = float(bal)
+        sq1.append(b * b + 1.0)
+\end{lstlisting}
+
+\paragraph{Funktionale Umsetzung (Version 2.0)}\mbox{}
+
+\begin{lstlisting}[language=Python]
+balances = [
+    float(r["balance"])
+    for r in current
+    if isinstance(r.get("balance"), (int, float))
+]
+
+sq1 = list(map(lambda b: b * b + 1.0, balances))
+\end{lstlisting}
+
+Die funktionale Variante trennt klar zwischen der Auswahl gültiger Werte und der eigentlichen Transformation.
+Dadurch wird die Rechenlogik kompakter formuliert und leichter wiederverwendbar.
+
+\subsubsection{Zusammenfassung der Unterschiede}
 
 \begin{itemize}
   \item \textbf{Lesbarkeit:} Version 2.0 ist kompakter und beschreibt häufig \emph{was} berechnet wird, statt \emph{wie}.
   \item \textbf{Wartbarkeit:} Wiederverwendbare Hilfsfunktionen (Prädikate, Mapping-Funktionen) reduzieren Duplikation.
   \item \textbf{Fehleranfälligkeit:} Weniger mutable Zwischenzustände und weniger Hilfsvariablen verringern typische Fehlerquellen.
 \end{itemize}
-
 
 % ======================================================
 \section{Fazit}
@@ -289,6 +460,26 @@ in Version 2.0 deutlich. Verschachtelte Schleifen und Hilfsvariablen
 konnten durch deklarative Ausdrücke ersetzt werden.
 Dies führte zu besserer Lesbarkeit und weniger Fehleranfälligkeit.
 
+\subsection{Bewusste Designentscheidungen}
+
+Im Rahmen der Transformation numerischer Variablen wurden bewusst unterschiedliche
+mathematische Abbildungen eingesetzt.
+Neben einer fachlich realistischen Transformation mittels Logarithmus
+\( \log(\text{balance}) \) wurde zusätzlich eine einfache quadratische Transformation
+\( \text{balance}^2 + 1 \) verwendet.
+
+Der Logarithmus ist insbesondere im wirtschaftlichen Kontext sinnvoll, da er
+rechtsschiefe Verteilungen reduziert und Ausreißer abschwächt.
+Allerdings ist diese Transformation nur für positive Werte definiert und erfordert
+zusätzliche Prüfungen des Wertebereichs.
+
+Die quadratische Transformation hingegen ist für alle numerischen Werte definiert
+und eignet sich besonders gut, um funktionale Abbildungen unabhängig von
+Sonderfällen zu demonstrieren.
+Dadurch konnte der Fokus im Projekt gezielt auf den Vergleich funktionaler
+Programmierkonzepte gelegt werden, ohne die Darstellung durch zusätzliche
+Randfallbehandlung zu verkomplizieren.
+
 \subsection{Wiederverwendung funktionaler Konzepte}
 
 Die funktionalen Konzepte würden in zukünftigen Projekten erneut
@@ -299,6 +490,29 @@ eingesetzt werden, insbesondere bei:
     \item Aggregationen
     \item Transformationen von Listen und Datensätzen
 \end{itemize}
+
+\subsection{Grenzen funktionaler Elemente in Python}
+
+Obwohl Python zahlreiche funktionale Sprachelemente bereitstellt, handelt es sich
+nicht um eine rein funktionale Programmiersprache.
+Im Vergleich zu funktionalen Sprachen wie Haskell werden zentrale Konzepte wie
+Immutabilität oder Nebenwirkungsfreiheit nicht erzwungen, sondern lediglich
+konventionell eingehalten.
+
+Variablen können weiterhin verändert werden, und Funktionen können unbeabsichtigt
+Seiteneffekte erzeugen.
+Die korrekte Anwendung funktionaler Konzepte hängt somit stark von der Disziplin
+der Entwickelnden ab und wird nicht durch den Sprachkern abgesichert.
+
+Diese Einschränkungen wurden im Projekt bewusst in Kauf genommen, da der Fokus
+auf dem Vergleich imperativer und funktionaler Denkweisen innerhalb einer
+praxisnahen Sprache lag.
+
+In einer rein funktionalen Sprache könnten diese Konzepte konsistenter und
+durch den Compiler abgesichert umgesetzt werden.
+Python eignet sich jedoch besonders gut, um funktionale Programmierkonzepte
+schrittweise in bestehende imperative Arbeitsweisen zu integrieren.
+
 
 \subsection{Anwendungsfälle im beruflichen Umfeld}
 
@@ -315,11 +529,51 @@ für:
 \noindent
 Zusammenfassend lässt sich sagen, dass funktionale Programmieransätze
 eine sinnvolle Ergänzung zur imperativen Programmierung darstellen und
-in vielen Anwendungsfällen zu einer klareren und effizienteren Lösung führen. \\
+in vielen Anwendungsfällen zu einer klareren und effizienteren Lösung führen.
+
+% ======================================================
+\section*{Hinweis zur Entstehung der Arbeit}
+
+Zur Unterstützung bei der Dokumentation und beim Refactoring wurden
+KI-basierte Werkzeuge konsultiert.
+Die Projektarbeit wurde eigenständig umgesetzt; sämtliche Ergebnisse,
+Implementierungen und Auswertungen wurden von den Autoren geprüft,
+verstanden und verantwortet.
+
+% ======================================================
+\section{Quellen}
+\label{sec:quellen}
+
+\begin{thebibliography}{9}
+
+\bibitem{moro2011}
+S. Moro, R. Laureano, P. Cortez.
+\textit{Using Data Mining for Bank Direct Marketing: An Application of the CRISP-DM Methodology}.
+Proceedings of the European Simulation and Modelling Conference (ESM 2011).
+
+\bibitem{unibas-assignment}
+Maringer, Dietmar und Kitzing, Emil.
+\textit{Multivariate Datenanalyse – Assignment 1}.
+WWZ, Universität Basel, Herbstsemester 2024.
+
+\bibitem{montgomery2017}
+Montgomery, Douglas C.
+\textit{Design and Analysis of Experiments}.
+9th Edition, Wiley, 2022.
+
+\bibitem{github}
+Projekt-Repository:
+\href{https://github.com/stoicfist/Modul-323-Projektarbeit}{https://github.com/stoicfist/Modul-323-Projektarbeit}
+
+\end{thebibliography}
+
+
 
 \newline
-\noindent\textit{Hinweis:} Der vollständige Quellcode befindet sich im Projekt-Repository:
-\href{https://github.com/stoicfist/Modul-323-Projektarbeit}{github.com/stoicfist/Modul-323-Projektarbeit}.
-Er wurde in dieser Dokumentation bewusst nicht vollständig abgedruckt, um den Fokus auf Konzept und Vergleich zu legen.
+\noindent\textit{Hinweis:} Der vollständige Quellcode befindet sich im Projekt-Repository
+(vgl.~\cite{github}).
+Er wurde in dieser Dokumentation bewusst nicht vollständig abgedruckt, um den Fokus
+auf Konzept und Vergleich zu legen.
+
 
 \end{document}
