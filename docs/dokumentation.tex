@@ -171,6 +171,12 @@ from functools import reduce
 reduce(lambda acc, x: acc + x, [1,2,3], 0)  # -> 6
 \end{lstlisting}
 
+Diese funktionalen Konzepte werden im Projekt konkret eingesetzt für:
+\begin{itemize}
+  \item Filterung von Datensätzen über Prädikatfunktionen (\texttt{apply\_filters})
+  \item Gruppierung von Daten mittels \texttt{reduce} (\texttt{group\_by\_key})
+  \item Numerische Transformationen und Aggregationen (\texttt{mean}, ANOVA)
+\end{itemize}
 
 % ======================================================
 \section{Datengrundlage}
