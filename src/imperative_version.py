@@ -35,11 +35,11 @@ import os
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from common_io import (
-    _fmt_int,
-    _fmt_num,
-    _fmt_pct,
-    _header,
-    _table,
+    fmt_int,
+    fmt_num,
+    fmt_pct,
+    header,
+    table,
     load_bank_data,
     normalize_choice_yes_no,
     parse_balance_gt,
@@ -423,7 +423,7 @@ def _prompt_filters() -> Tuple[Optional[bool], Optional[bool], Optional[float]]:
     Returns:
         Tuple of (housing, loan, balance_gt) where None means no filter.
     """
-    print(_header("FILTER"))
+    print(header("FILTER"))
     print("Leerlassen = kein Filter / unverändert")
     housing = normalize_choice_yes_no(input("housing (yes/no): "))
     loan = normalize_choice_yes_no(input("loan (yes/no): "))
@@ -478,7 +478,7 @@ def _menu() -> str:
     Returns:
         User's menu selection as string ("1"-"8" or "q").
     """
-    print(_header("MENU"))
+    print(header("MENU"))
     print("1) Erfolgsquote gesamt")
     print("2) Filter setzen (housing/loan/balance>X)")
     print("3) Transformationen (log(balance), balance^2+1)")
@@ -500,7 +500,7 @@ def main() -> None:
     data = load_bank_data()
     current = list(data)
 
-    print(_header("BANK MARKETING – CLI"))
+    print(header("BANK MARKETING – CLI"))
     print(f"Datensätze geladen: {len(data)}")
 
     while True:
@@ -510,23 +510,23 @@ def main() -> None:
             return
 
         if choice == "1":
-            print(_header("ERFOLGSQUOTE"))
+            print(header("ERFOLGSQUOTE"))
             total, yes_count, quote = success_overall(current)
             rows = [
                 ["Total", str(total)],
                 ["Yes", str(yes_count)],
-                ["Quote", _fmt_pct(quote)],
+                ["Quote", fmt_pct(quote)],
             ]
-            print(_table(["Metric", "Value"], rows, aligns=["<", ">"]))
+            print(table(["Metric", "Value"], rows, aligns=["<", ">"]))
 
         elif choice == "2":
             housing, loan, balance_gt = _prompt_filters()
             current = apply_filters(data, housing, loan, balance_gt)
-            print(_header("FILTER RESULT"))
+            print(header("FILTER RESULT"))
             print(f"Aktueller Datenbestand: {len(current)} / {len(data)}")
 
         elif choice == "3":
-            print(_header("TRANSFORMATIONEN"))
+            print(header("TRANSFORMATIONEN"))
             logs: List[float] = []
             sq1: List[float] = []
             for row in current:
@@ -542,19 +542,19 @@ def main() -> None:
                 var = variance_population(values)
                 mn: Optional[float] = min(values) if values else None
                 mx: Optional[float] = max(values) if values else None
-                return [name, str(len(values)), _fmt_num(mn), _fmt_num(mx), _fmt_num(mu), _fmt_num(var)]
+                return [name, str(len(values)), fmt_num(mn), fmt_num(mx), fmt_num(mu), fmt_num(var)]
 
             rows = [
                 stats_line("log(balance)", logs),
                 stats_line("balance^2+1", sq1),
             ]
-            print(_table(["Transform", "n", "min", "max", "mean", "var"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
+            print(table(["Transform", "n", "min", "max", "mean", "var"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
 
         elif choice == "4":
-            print(_header("DURATION ANALYSE"))
+            print(header("DURATION ANALYSE"))
             mn, mx, mu, var = duration_stats(current)
-            rows = [[_fmt_int(mn), _fmt_int(mx), _fmt_num(mu), _fmt_num(var)]]
-            print(_table(["min", "max", "mean", "var"], rows, aligns=[">", ">", ">", ">"]))
+            rows = [[fmt_int(mn), fmt_int(mx), fmt_num(mu), fmt_num(var)]]
+            print(table(["min", "max", "mean", "var"], rows, aligns=[">", ">", ">", ">"]))
 
             do_buckets = input("Buckets anzeigen? (y/n): ").strip().lower() == "y"
             if do_buckets:
@@ -562,28 +562,28 @@ def main() -> None:
                 buckets = duration_buckets(current, bucket_size)
                 b_rows: List[List[str]] = []
                 for label, cnt, rate in buckets:
-                    b_rows.append([label, str(cnt), _fmt_pct(rate)])
-                print(_header("DURATION BUCKETS"))
-                print(_table(["bucket", "count", "success"], b_rows, aligns=["<", ">", ">"]))
+                    b_rows.append([label, str(cnt), fmt_pct(rate)])
+                print(header("DURATION BUCKETS"))
+                print(table(["bucket", "count", "success"], b_rows, aligns=["<", ">", ">"]))
 
         elif choice == "5":
-            print(_header("GROUP BY EDUCATION"))
+            print(header("GROUP BY EDUCATION"))
             metrics = group_metrics(current, "education")
             rows = []
             for name, cnt, avg_age, avg_bal, rate in metrics:
-                rows.append([name or "(blank)", str(cnt), _fmt_num(avg_age, 1), _fmt_num(avg_bal, 2), _fmt_pct(rate)])
-            print(_table(["education", "count", "avg(age)", "avg(balance)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
+                rows.append([name or "(blank)", str(cnt), fmt_num(avg_age, 1), fmt_num(avg_bal, 2), fmt_pct(rate)])
+            print(table(["education", "count", "avg(age)", "avg(balance)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
 
         elif choice == "6":
-            print(_header("GROUP BY MARITAL"))
+            print(header("GROUP BY MARITAL"))
             metrics = marital_compare(current)
             rows = []
             for name, cnt, avg_bal, avg_dur, rate in metrics:
-                rows.append([name, str(cnt), _fmt_num(avg_bal, 2), _fmt_num(avg_dur, 1), _fmt_pct(rate)])
-            print(_table(["marital", "count", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
+                rows.append([name, str(cnt), fmt_num(avg_bal, 2), fmt_num(avg_dur, 1), fmt_pct(rate)])
+            print(table(["marital", "count", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
 
         elif choice == "7":
-            print(_header("VERGLEICH ZWEIER GRUPPEN"))
+            print(header("VERGLEICH ZWEIER GRUPPEN"))
             field = _prompt_group_field("education")
             available_set: set[str] = set()
             for r in current:
@@ -603,21 +603,21 @@ def main() -> None:
                 result: List[str] = []
                 result.append(name or "(blank)")
                 result.append(str(cnt))
-                result.append(_fmt_num(avg_age, 1))
-                result.append(_fmt_num(avg_bal, 2))
-                result.append(_fmt_num(avg_dur, 1))
-                result.append(_fmt_pct(rate))
+                result.append(fmt_num(avg_age, 1))
+                result.append(fmt_num(avg_bal, 2))
+                result.append(fmt_num(avg_dur, 1))
+                result.append(fmt_pct(rate))
                 
                 return result
 
             rows = [row(m1), row(m2)]
-            print(_table([field, "count", "avg(age)", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
+            print(table([field, "count", "avg(age)", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
             delta = m1[-1] - m2[-1]
             sign = "+" if delta >= 0 else ""
             print(f"Δ Erfolgsquote (A-B): {sign}{delta * 100:0.1f}%")
 
         elif choice == "8":
-            print(_header("ANOVA-ÄHNLICHER F-WERT (BALANCE)"))
+            print(header("ANOVA-ÄHNLICHER F-WERT (BALANCE)"))
             field = _prompt_group_field("education")
             result = anova_f_balance(current, field)
             if result is None:
