@@ -6,7 +6,7 @@ Authors: Peter Ngo, Alex Uscata
 Class: INA 23A
 Module: M323 - Functional Programming
 Date: 2026-01-06
-Version: 1.1.1
+Version: 1.2.1
 
 This module provides shared input/output functionality for loading and parsing
 bank marketing data. It handles CSV file reading with automatic delimiter detection,
@@ -154,7 +154,7 @@ def _detect_delimiter(sample: str) -> str:
     Returns ',' or ';' based on the sample content.
     """
     try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=[",", ";"])
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;")
         if dialect.delimiter in {",", ";"}:
             return dialect.delimiter
     except csv.Error:

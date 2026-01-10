@@ -63,8 +63,8 @@ def test_group_by_education_metrics():
     """
     data = load_bank_data()
 
-    f_metrics = func._group_metrics(data, "education")
-    i_metrics = imp._group_metrics(data, "education")
+    f_metrics = func.group_metrics(data, "education")
+    i_metrics = imp.group_metrics(data, "education")
 
     assert len(f_metrics) == len(i_metrics), "Unterschiedliche Anzahl Gruppen"
 
@@ -92,8 +92,8 @@ def test_anova_f_value_education():
     """
     data = load_bank_data()
 
-    f_res = func._anova_f_balance(data, "education")
-    i_res = imp._anova_f_balance(data, "education")
+    f_res = func.anova_f_balance(data, "education")
+    i_res = imp.anova_f_balance(data, "education")
 
     assert f_res is not None and i_res is not None, "Eine der Versionen liefert None"
 
@@ -116,8 +116,8 @@ def test_group_counts_sum_to_total():
     """
     data = load_bank_data()
 
-    f_metrics = func._group_metrics(data, "education")
-    i_metrics = imp._group_metrics(data, "education")
+    f_metrics = func.group_metrics(data, "education")
+    i_metrics = imp.group_metrics(data, "education")
 
     f_total = sum(cnt for _, cnt, *_ in f_metrics)
     i_total = sum(cnt for _, cnt, *_ in i_metrics)
@@ -141,12 +141,12 @@ def test_deterministic_results_repeated_runs():
     """
     data = load_bank_data()
 
-    f_first = func._group_metrics(data, "education")
-    i_first = imp._group_metrics(data, "education")
+    f_first = func.group_metrics(data, "education")
+    i_first = imp.group_metrics(data, "education")
 
     for _ in range(30):
-        assert func._group_metrics(data, "education") == f_first, "Functional results are not deterministic"
-        assert imp._group_metrics(data, "education") == i_first, "Imperative results are not deterministic"
+        assert func.group_metrics(data, "education") == f_first, "Functional results are not deterministic"
+        assert imp.group_metrics(data, "education") == i_first, "Imperative results are not deterministic"
 
 
 def test_anova_returns_none_on_insufficient_data():
@@ -154,8 +154,8 @@ def test_anova_returns_none_on_insufficient_data():
     Edge-case test: ANOVA should return None if there is not enough data
     (e.g., empty dataset or fewer than 2 non-empty groups).
     """
-    assert func._anova_f_balance([], "education") is None
-    assert imp._anova_f_balance([], "education") is None
+    assert func.anova_f_balance([], "education") is None
+    assert imp.anova_f_balance([], "education") is None
 
     # Dataset with only one group -> df_between would be 0 -> should return None
     one_group = [
@@ -163,8 +163,8 @@ def test_anova_returns_none_on_insufficient_data():
         {"education": "primary", "balance": 200.0, "age": 40, "complete": True},
         {"education": "primary", "balance": 300.0, "age": 50, "complete": False},
     ]
-    assert func._anova_f_balance(one_group, "education") is None
-    assert imp._anova_f_balance(one_group, "education") is None
+    assert func.anova_f_balance(one_group, "education") is None
+    assert imp.anova_f_balance(one_group, "education") is None
 
 
 

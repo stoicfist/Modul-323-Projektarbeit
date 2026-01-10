@@ -242,22 +242,27 @@ Die Applikation gibt die Resultate als formatierten Text auf der Konsole aus.
 ### Beispielhafter Konsolen-Output
 
 ```
-===========================
-Bankkampagne – Erfolgsquote
+Verfügbare Gruppen in 'education': primary, secondary, tertiary
+========================================================================
+                        VERGLEICH ZWEIER GRUPPEN                        
+========================================================================
+education | count | avg(age) | avg(balance) | avg(duration) | success
+----------+-------+----------+--------------+---------------+--------
+tertiary  |   857 |     38.3 |      2420.82 |         397.0 |   49.9%
+secondary |  1640 |     38.8 |      1641.63 |         410.9 |   42.1%
 
-Anzahl Kunden: 4521
-Abschlüsse (yes): 512
-Erfolgsquote: 11.3 %
+Δ Erfolgsquote (A-B): +7.9%
 
-===========================
-Vergleich nach Education
-Kategorie | Durchschnitt Balance | Erfolgsquote
+========================================================================
+                           GROUP BY EDUCATION                           
+========================================================================
+education | count | avg(age) | avg(balance) | success
+----------+-------+----------+--------------+--------
+primary   |   413 |     42.3 |      1673.77 |   37.0%
+secondary |  1640 |     38.8 |      1641.63 |   42.1%
+tertiary  |   857 |     38.3 |      2420.82 |   49.9%
 
-primary | 850 | 8.5 %
-secondary | 1200 | 10.1 %
-tertiary | 1800 | 14.3 %
-
-ANOVA F-Wert: 5.21
+ANOVA F-Wert: 23.61 (df=2,2907)
 ```
 
 ---
