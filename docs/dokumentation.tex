@@ -386,9 +386,17 @@ In Version 2.0 wird dieselbe Logik deklarativ als Prädikatfunktion formuliert u
 
 \paragraph{Imperative Umsetzung (Version 1.0)}\mbox{}
 
-\begin{lstlisting}[language=Python]
-def _apply_filters(data, housing, loan, balance_gt):
-    out = []
+\begin{lstlisting}[
+    language=Python,
+    numbers=left,
+    firstnumber=68,
+    caption={Imperative Filterung mittels Schleifen und Kontrollfluss aus \texttt{imperative\_version.py}},
+    label={lst:apply_filters_imperative}
+  ]
+
+def apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
+
+    out: List[Dict[str, Any]] = []
     for row in data:
         if housing is not None and row.get("housing") is not housing:
             continue
@@ -405,9 +413,17 @@ def _apply_filters(data, housing, loan, balance_gt):
 
 \paragraph{Funktionale Umsetzung (Version 2.0)}\mbox{}
 
-\begin{lstlisting}[language=Python]
-def _apply_filters(data, housing, loan, balance_gt):
-    def pred(row):
+\begin{lstlisting}[
+    language=Python,
+    numbers=left,
+    firstnumber=139,
+    caption={Funktionale Filterung mittels Prädikatfunktion und \texttt{filter} aus \texttt{functional\_version.py}},
+    label={lst:apply_filters_functional}
+  ]
+
+def apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
+
+    def pred(row: Dict[str, Any]) -> bool:
         if housing is not None and row.get("housing") is not housing:
             return False
         if loan is not None and row.get("loan") is not loan:
@@ -421,74 +437,144 @@ def _apply_filters(data, housing, loan, balance_gt):
     return list(filter(pred, data))
 \end{lstlisting}
 
-In der funktionalen Variante wird die Filterbedingung in einer separaten Prädikatfunktion gekapselt.
-Dies ermöglicht eine deklarative Beschreibung der Filterlogik und vermeidet explizite Kontrollstrukturen.
+Die beiden Codeausschnitte zeigen die Umsetzung derselben Filterlogik in
+imperativer und funktionaler Form.
+In der imperativen Version (Listing~\ref{lst:apply_filters_imperative}) wird der
+Datensatz explizit mit einer Schleife durchlaufen, und die Filterbedingungen
+werden über Kontrollflussanweisungen wie \texttt{continue} realisiert.
+Zwischenergebnisse werden dabei in einer veränderlichen Liste gesammelt.
 
-\subsubsection{Beispiel B: Aggregation (Tabellenbreiten)}
+In der funktionalen Version (Listing~\ref{lst:apply_filters_functional}) wird die
+Filterlogik in einer separaten Prädikatfunktion gekapselt und anschließend
+deklarativ mit der Higher-Order-Funktion \texttt{filter} auf den gesamten Datensatz
+angewendet.
+Dadurch entfällt expliziter Kontrollfluss, und die Logik beschreibt direkt,
+welche Elemente beibehalten werden sollen, anstatt wie iteriert werden muss.
 
-Für die tabellarische Ausgabe müssen die maximalen Spaltenbreiten über alle Zeilen hinweg ermittelt werden.
-In Version 1.0 erfolgt dies schrittweise mittels Schleifen und veränderlicher Zustände.
-Version 2.0 verwendet hingegen eine funktionale Faltung (\texttt{reduce}), welche die Aggregation deklarativ beschreibt.
+\subsubsection{Beispiel B: Gruppierung mit \texttt{reduce} (Group by)}
+
+Für mehrere Auswertungen (z.\,B. \textit{Group by Education}) müssen Datensätze nach einem Feldwert
+gruppiert werden. In Version 1.0 wird dafür schrittweise ein Dictionary aufgebaut und jede Zeile
+wird in eine veränderliche Liste eingefügt.
+Version 2.0 formuliert dieselbe Operation als funktionale Faltung (\texttt{reduce}), wobei der
+Akkumulator als unveränderliche Struktur behandelt und bei jedem Schritt neu erzeugt wird.
 
 \paragraph{Imperative Umsetzung (Version 1.0)}\mbox{}
 
-\begin{lstlisting}[language=Python]
-widths = [len(h) for h in headers]
+\begin{lstlisting}[
+    language=Python,
+    numbers=left,
+    firstnumber=234,
+    caption={Imperative Gruppierung mit Schleifen und veränderlichem Zustand aus \texttt{imperative\_version.py}},
+    label={lst:group_by_imperative}
+  ]
 
-for row in rows:
-    for i, cell in enumerate(row):
-        if len(cell) > widths[i]:
-            widths[i] = len(cell)
+def group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[str, Any]]]:
+
+      groups: Dict[str, List[Dict[str, Any]]] = {}
+      for row in data:
+          k = row.get(key)
+          k_str = "" if k is None else str(k)
+          if k_str not in groups:
+              groups[k_str] = []
+          groups[k_str].append(row)
+      return groups
 \end{lstlisting}
 
 \paragraph{Funktionale Umsetzung (Version 2.0)}\mbox{}
 
-\begin{lstlisting}[language=Python]
-widths = list(map(len, headers))
+\begin{lstlisting}[
+    language=Python,
+    numbers=left,
+    firstnumber=424,
+    caption={Funktionale Gruppierung mit \texttt{reduce} aus \texttt{functional\_version.py}},
+    label={lst:group_by_reduce}
+  ]
 
-def upd(acc, row):
-    return [max(acc[i], len(cell)) for i, cell in enumerate(row)]
+def group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, Tuple[Dict[str, Any], ...]]:
 
-widths = reduce(upd, rows, widths)
+    def add(acc: Dict[str, Tuple[Dict[str, Any], ...]], row: Dict[str, Any]) -> Dict[str, Tuple[Dict[str, Any], ...]]:
+         k = row.get(key)
+         k_str = "" if k is None else str(k)
+         existing_group = acc.get(k_str, ())
+         new_group = existing_group + (row,)
+         return {**acc, k_str: new_group}
+
+    return reduce(add, data, {})
 \end{lstlisting}
 
-Die funktionale Variante beschreibt die Aggregation als reine Abbildung vom bisherigen Akkumulator
-und einer Zeile auf einen neuen Akkumulator.
-Dadurch entfällt explizite Zustandsänderung, was die Logik klarer und leichter testbar macht.
+Die folgenden Listings zeigen dieselbe Funktionalität zur Gruppierung von Datensätzen,
+einmal in imperativer (Listing~\ref{lst:group_by_imperative}) und einmal in funktionaler
+Umsetzung (Listing~\ref{lst:group_by_reduce}). Beide Ausschnitte stammen aus den
+jeweiligen Implementierungsdateien und wurden zur besseren Vergleichbarkeit
+isoliert dargestellt.
+
+Die imperative Variante arbeitet mit veränderlichen Datenstrukturen (Dictionary und Listen) und
+verändert diese schrittweise.
+Die funktionale Variante beschreibt denselben Prozess als Abbildung von \emph{Akkumulator + Element}
+auf einen neuen Akkumulator und vermeidet dabei mutierende Operationen.
+Dadurch wird die Gruppierungslogik deklarativer und lässt sich direkt für mehrere Auswertungen
+wiederverwenden (z.\,B. Bildung, Beruf oder Familienstand).
 
 
-\subsubsection{Beispiel C: Transformation numerischer Werte (map)}
+\subsubsection{Beispiel C: Transformation und Aggregation numerischer Werte (\texttt{map} und \texttt{sum})}
 
-Numerische Transformationen wie \texttt{balance\^{}2 + 1} werden in Version 1.0
-schrittweise in einer Schleife berechnet und in einer Liste gesammelt.
-Version 2.0 beschreibt dieselbe Operation deklarativ als Abbildung über alle Werte
-mittels \texttt{map} und einer Lambda-Funktion.
+Die Berechnung des arithmetischen Mittels zeigt exemplarisch, wie numerische
+Transformation und Aggregation in der funktionalen Version ohne explizite
+Schleifen oder veränderliche Akkumulatoren umgesetzt werden können.
+Zunächst werden alle Werte mittels \texttt{map} in Gleitkommazahlen transformiert,
+anschließend erfolgt die Aggregation über \texttt{sum}.
 
 \paragraph{Imperative Umsetzung (Version 1.0)}\mbox{}
 
-\begin{lstlisting}[language=Python]
-sq1 = []
-for row in current:
-    bal = row.get("balance")
-    if isinstance(bal, (int, float)):
-        b = float(bal)
-        sq1.append(b * b + 1.0)
+\begin{lstlisting}[
+    language=Python,
+    numbers=left,
+    firstnumber=117,
+    caption={Imperative Berechnung des arithmetischen Mittels mit expliziter Schleife aus \texttt{imperative\_version.py}},
+    label={lst:mean_imperative}
+  ]
+
+def mean(values: List[float]) -> Optional[float]:
+
+    if not values:
+        return None
+    s = 0.0
+    n = 0
+    for v in values:
+        s += float(v)
+        n += 1
+    if n == 0:
+        return None
+    return s / float(n)
 \end{lstlisting}
 
 \paragraph{Funktionale Umsetzung (Version 2.0)}\mbox{}
 
-\begin{lstlisting}[language=Python]
-balances = [
-    float(r["balance"])
-    for r in current
-    if isinstance(r.get("balance"), (int, float))
-]
+\begin{lstlisting}[
+    language=Python,
+    numbers=left,
+    firstnumber=294,
+    caption={Funktionale Berechnung des arithmetischen Mittels mit \texttt{map} und \texttt{sum} aus \texttt{functional\_version.py}},
+    label={lst:mean_functional}
+  ]
 
-sq1 = list(map(lambda b: b * b + 1.0, balances))
+def mean(values: List[float]) -> Optional[float]:
+
+    return (sum(map(float, values)) / float(len(values))) if values else None
 \end{lstlisting}
 
-Die funktionale Variante trennt klar zwischen der Auswahl gültiger Werte und der eigentlichen Transformation.
-Dadurch wird die Rechenlogik kompakter formuliert und leichter wiederverwendbar.
+Die beiden Listings zeigen die Berechnung des arithmetischen Mittels einmal in
+imperativer und einmal in funktionaler Form.
+In der imperativen Version (Listing~\ref{lst:mean_imperative}) wird ein veränderlicher
+Akkumulator (\texttt{s}) sowie ein expliziter Zähler (\texttt{n}) verwendet, die innerhalb
+einer Schleife schrittweise aktualisiert werden.
+
+In der funktionalen Version (Listing~\ref{lst:mean_functional}) wird dieselbe Berechnung
+deklarativ formuliert: Die Transformation der Werte erfolgt über \texttt{map}, die
+Aggregation über \texttt{sum}. Ein expliziter Schleifenindex oder ein veränderlicher
+Zwischenzustand ist nicht notwendig. Dadurch entspricht der Code direkt der
+mathematischen Definition des Mittelwerts und ist kompakter sowie leichter zu lesen.
 
 \subsubsection{Zusammenfassung der Unterschiede}
 
@@ -641,5 +727,10 @@ Projekt-Repository:
 \textit{Hinweis:} Der vollständige Quellcode wurde in dieser Dokumentation bewusst
 nicht vollständig abgedruckt, um den Fokus auf Konzept und Vergleich zu legen
 (vgl. \cite{github}).
+
+\section{Appendix}
+
+
+
 
 \end{document}
