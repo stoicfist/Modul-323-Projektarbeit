@@ -303,6 +303,43 @@ ANOVA F-Wert: 41.93 (df=2,7471)
 \textit{Hinweis:} Version 1.0 (imperativ) und Version 2.0 (funktional)
 liefern identische Resultate.
 
+\subsection{Validierung der Resultate}
+Die automatisierten Tests befinden sich im Verzeichnis \texttt{tests/} und können
+direkt über die Kommandozeile ausgeführt werden:
+
+\begin{verbatim}
+python test_outputs.py
+\end{verbatim}
+
+Zur Validierung wurden mehrere automatisierte Tests implementiert, welche die
+funktionale und die imperative Implementierung systematisch miteinander
+vergleichen. Ziel dieser Tests ist es, sicherzustellen, dass beide
+Programmversionen trotz unterschiedlicher Programmierparadigmen identische
+inhaltliche Resultate liefern.
+
+Konkret wurden folgende Aspekte überprüft:
+\begin{itemize}
+    \item Vergleich der Gruppierungsresultate (\textit{Group by Education}):
+    Gruppennamen, Gruppengrößen, durchschnittliches Alter, durchschnittlicher
+    Kontostand sowie Erfolgsquoten stimmen in beiden Implementierungen überein.
+    \item Vergleich des berechneten ANOVA-F-Werts inklusive der Freiheitsgrade
+    ($df_{between}$ und $df_{within}$).
+    \item Invarianzprüfung: Die Summe der Gruppengrößen entspricht stets der
+    Gesamtanzahl der Datensätze, und alle Erfolgsquoten liegen im gültigen
+    Wertebereich $[0,1]$.
+    \item Determinismus: Mehrfache Ausführungen mit identischen Eingabedaten
+    liefern in beiden Implementierungen stets exakt dieselben Resultate.
+    \item Behandlung von Randfällen: Für unzureichende Datengrundlagen (z.\,B.
+    leere Datensätze oder nur eine vorhandene Gruppe) liefert die ANOVA-Funktion
+    korrekt den Wert \texttt{None}.
+\end{itemize}
+
+Alle Tests wurden erfolgreich ausgeführt und bestätigen die inhaltliche
+Äquivalenz der funktionalen und imperativen Version. Damit ist sichergestellt,
+dass die Unterschiede zwischen beiden Programmen ausschließlich in der
+Programmstruktur und im verwendeten Paradigma liegen, nicht jedoch in den
+berechneten Ergebnissen.
+
 \subsection{Interpretation und statistische Einordnung}
 
 Die Ergebnisse zeigen, dass der durchschnittliche Kontostand sowie die
@@ -314,18 +351,22 @@ Zur Bewertung der Unterschiede zwischen den Bildungsgruppen wird eine
 einfaktorielle Varianzanalyse (ANOVA) verwendet.
 Der ANOVA-F-Wert beschreibt das Verhältnis der Varianz zwischen den Gruppen
 zur Varianz innerhalb der Gruppen.
-Der hohe F-Wert deutet darauf hin, dass sich die Mittelwerte der Gruppen
+Ein hoher F-Wert deutet darauf hin, dass sich die Mittelwerte der Gruppen
 deutlich voneinander unterscheiden und die Varianz zwischen den
 Bildungsgruppen größer ist als die Varianz innerhalb der Gruppen.
 
-Die angegebenen Freiheitsgrade (df) geben an, wie viele unabhängige
+Die angegebenen Freiheitsgrade ($df$) geben an, wie viele unabhängige
 Informationen in die Berechnung eingeflossen sind.
 Dabei beschreibt $df_{between}$ die Anzahl der verglichenen Gruppen minus eins,
 während $df_{within}$ die Streuung der Werte innerhalb der Gruppen widerspiegelt
 \cite{montgomery2017}.
 
-Die Varianzanalyse wird in diesem Projekt ausschließlich deskriptiv
-verwendet; auf einen formalen Signifikanztest wird bewusst verzichtet.
+Die Varianzanalyse wird in diesem Projekt ausschließlich deskriptiv verwendet.
+Der F-Wert dient hier als Maßzahl zur Beschreibung der Stärke von
+Unterschieden zwischen den Gruppen und nicht als formale Entscheidungsregel
+im Sinne eines statistischen Signifikanztests.
+Auf die Berechnung von p-Werten und eine formale Hypothesenprüfung wird daher
+bewusst verzichtet.
 
 % ======================================================
 \section{Refactoring: Vergleich Version 1.0 vs. Version 2.0}
