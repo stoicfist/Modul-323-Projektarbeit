@@ -47,11 +47,13 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
 def _project_root() -> str:
+    """Return the absolute path to the project root directory (parent of src/)."""
     here = os.path.abspath(os.path.dirname(__file__))
     return os.path.abspath(os.path.join(here, ".."))
 
 
 def default_csv_path() -> str:
+    """Return the default CSV path (data/DatenBank.csv) relative to project root."""
     return os.path.join(_project_root(), "data", "DatenBank.csv")
 
 
@@ -147,6 +149,10 @@ def _to_float(value: Any) -> Optional[float]:
 
 
 def _detect_delimiter(sample: str) -> str:
+    """Detect CSV delimiter (comma or semicolon) using csv.Sniffer or character counting.
+    
+    Returns ',' or ';' based on the sample content.
+    """
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters=[",", ";"])
         if dialect.delimiter in {",", ";"}:
