@@ -39,11 +39,11 @@ from functools import reduce
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, TypeVar
 
 from common_io import (
-    _fmt_int,
-    _fmt_num,
-    _fmt_pct,
-    _header,
-    _table,
+    fmt_int,
+    fmt_num,
+    fmt_pct,
+    header,
+    table,
     load_bank_data,
     normalize_choice_yes_no,
     parse_balance_gt,
@@ -632,7 +632,7 @@ def _prompt_filters() -> Tuple[Optional[bool], Optional[bool], Optional[float]]:
     Returns:
         Tuple of (housing, loan, balance_gt) where None means no filter.
     """
-    print(_header("FILTER"))
+    print(header("FILTER"))
     print("Leerlassen = kein Filter / unverändert")
     housing = normalize_choice_yes_no(input("housing (yes/no): "))
     loan = normalize_choice_yes_no(input("loan (yes/no): "))
@@ -685,7 +685,7 @@ def _menu() -> str:
     Returns:
         User's menu selection as string ("1"-"8" or "q").
     """
-    print(_header("MENU"))
+    print(header("MENU"))
     print("1) Erfolgsquote gesamt")
     print("2) Filter setzen (housing/loan/balance>X)")
     print("3) Transformationen (log(balance), balance^2+1)")
@@ -707,7 +707,7 @@ def main() -> None:
     data = load_bank_data()
     current = list(data)
 
-    print(_header("BANK MARKETING – CLI"))
+    print(header("BANK MARKETING – CLI"))
     print(f"Datensätze geladen: {len(data)}")
 
     while True:
@@ -720,10 +720,10 @@ def main() -> None:
         # More structured and readable than if/elif chains for menu handling
         match choice:
             case "1":
-                print(_header("ERFOLGSQUOTE"))
+                print(header("ERFOLGSQUOTE"))
                 total, yes_count, quote = success_overall(current)
-                rows = [["Total", str(total)], ["Yes", str(yes_count)], ["Quote", _fmt_pct(quote)]]
-                print(_table(["Metric", "Value"], rows, aligns=["<", ">"]))
+                rows = [["Total", str(total)], ["Yes", str(yes_count)], ["Quote", fmt_pct(quote)]]
+                print(table(["Metric", "Value"], rows, aligns=["<", ">"]))
 
             case "2":
                 housing, loan, balance_gt = _prompt_filters()
@@ -747,11 +747,11 @@ def main() -> None:
                 else:
                     current = list(data)
                 
-                print(_header("FILTER RESULT"))
+                print(header("FILTER RESULT"))
                 print(f"Aktueller Datenbestand: {len(current)} / {len(data)}")
 
             case "3":
-                print(_header("TRANSFORMATIONEN"))
+                print(header("TRANSFORMATIONEN"))
                 
                 # Pipeline composition: data -> filter -> extract -> transform -> analyze -> format
                 balance_pipeline = pipe(
@@ -784,10 +784,10 @@ def main() -> None:
                         lambda stats: [
                             stats['name'],
                             str(stats['count']),
-                            _fmt_num(stats['min']),
-                            _fmt_num(stats['max']),
-                            _fmt_num(stats['mean']),
-                            _fmt_num(stats['var'])
+                            fmt_num(stats['min']),
+                            fmt_num(stats['max']),
+                            fmt_num(stats['mean']),
+                            fmt_num(stats['var'])
                         ]
                     )
                 
@@ -810,41 +810,41 @@ def main() -> None:
                     square_analysis_pipeline(current)
                 ]
                 
-                print(_table(["Transform", "n", "min", "max", "mean", "var"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
+                print(table(["Transform", "n", "min", "max", "mean", "var"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
 
             case "4":
-                print(_header("DURATION ANALYSE"))
+                print(header("DURATION ANALYSE"))
                 mn, mx, mu, var = duration_stats(current)
-                rows = [[_fmt_int(mn), _fmt_int(mx), _fmt_num(mu), _fmt_num(var)]]
-                print(_table(["min", "max", "mean", "var"], rows, aligns=[">", ">", ">", ">"]))
+                rows = [[fmt_int(mn), fmt_int(mx), fmt_num(mu), fmt_num(var)]]
+                print(table(["min", "max", "mean", "var"], rows, aligns=[">", ">", ">", ">"]))
 
                 do_buckets = input("Buckets anzeigen? (y/n): ").strip().lower() == "y"
                 if do_buckets:
                     bucket_size = _prompt_bucket_size()
                     buckets = duration_buckets(current, bucket_size)
-                    b_rows = list(map(lambda t: [t[0], str(t[1]), _fmt_pct(t[2])], buckets))
-                    print(_header("DURATION BUCKETS"))
-                    print(_table(["bucket", "count", "success"], b_rows, aligns=["<", ">", ">"]))
+                    b_rows = list(map(lambda t: [t[0], str(t[1]), fmt_pct(t[2])], buckets))
+                    print(header("DURATION BUCKETS"))
+                    print(table(["bucket", "count", "success"], b_rows, aligns=["<", ">", ">"]))
 
             case "5":
-                print(_header("GROUP BY EDUCATION"))
+                print(header("GROUP BY EDUCATION"))
                 metrics = group_metrics(current, "education")
                 rows = list(
                     map(
-                        lambda t: [t[0] or "(blank)", str(t[1]), _fmt_num(t[2], 1), _fmt_num(t[3], 2), _fmt_pct(t[4])],
+                        lambda t: [t[0] or "(blank)", str(t[1]), fmt_num(t[2], 1), fmt_num(t[3], 2), fmt_pct(t[4])],
                         metrics,
                     )
                 )
-                print(_table(["education", "count", "avg(age)", "avg(balance)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
+                print(table(["education", "count", "avg(age)", "avg(balance)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
 
             case "6":
-                print(_header("GROUP BY MARITAL"))
+                print(header("GROUP BY MARITAL"))
                 metrics = marital_compare(current)
-                rows = list(map(lambda t: [t[0], str(t[1]), _fmt_num(t[2], 2), _fmt_num(t[3], 1), _fmt_pct(t[4])], metrics))
-                print(_table(["marital", "count", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
+                rows = list(map(lambda t: [t[0], str(t[1]), fmt_num(t[2], 2), fmt_num(t[3], 1), fmt_pct(t[4])], metrics))
+                print(table(["marital", "count", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">"]))
 
             case "7":
-                print(_header("VERGLEICH ZWEIER GRUPPEN"))
+                print(header("VERGLEICH ZWEIER GRUPPEN"))
                 field = _prompt_group_field("education")
                 available = sorted({(r.get(field) or "") for r in current})
                 g1, g2 = _prompt_group_names(available)
@@ -852,16 +852,16 @@ def main() -> None:
 
                 def row(m: Tuple[str, int, Optional[float], Optional[float], Optional[float], float]) -> List[str]:
                     name, cnt, avg_age, avg_bal, avg_dur, rate = m
-                    return [name or "(blank)", str(cnt), _fmt_num(avg_age, 1), _fmt_num(avg_bal, 2), _fmt_num(avg_dur, 1), _fmt_pct(rate)]
+                    return [name or "(blank)", str(cnt), fmt_num(avg_age, 1), fmt_num(avg_bal, 2), fmt_num(avg_dur, 1), fmt_pct(rate)]
 
                 rows = [row(m1), row(m2)]
-                print(_table([field, "count", "avg(age)", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
+                print(table([field, "count", "avg(age)", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
                 delta = m1[-1] - m2[-1]
                 sign = "+" if delta >= 0 else ""
                 print(f"Δ Erfolgsquote (A-B): {sign}{delta * 100:0.1f}%")
 
             case "8":
-                print(_header("ANOVA-ÄHNLICHER F-WERT (BALANCE)"))
+                print(header("ANOVA-ÄHNLICHER F-WERT (BALANCE)"))
                 field = _prompt_group_field("education")
                 result = anova_f_balance(current, field)
                 if result is None:
