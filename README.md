@@ -63,7 +63,7 @@ Das Programm stellt folgende Auswertungen bereit:
    Berechnung von Minimum, Maximum, Durchschnitt und Varianz der Gesprächsdauer sowie optional Untersuchung des Zusammenhangs zwischen Gesprächsdauer und Kampagnenerfolg.
 
 5. **Gruppierung nach Bildungsstand (education)**  
-   Anzahl Kunden, Durchschnittsalter, Durchschnittsbalance und Erfolgsquote pro Kategorie.
+   Anzahl Kunden, Durchschnittsalter, Durchschnittsbalance und Erfolgsquote pro Kategorie, inklusive ANOVA-F-Wert zur deskriptiven Einordnung der Balance.
 
 6. **Gruppierung nach Familienstand (marital)**  
    Vergleich von `single`, `married` und `divorced` hinsichtlich Balance, Gesprächsdauer und Erfolgsquote.
