@@ -47,33 +47,15 @@ from common_io import (
 
 
 def _apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
-    """Filter bank records using imperative iteration with early exits.
-    
-    Iterates through each record explicitly, using continue statements to skip
-    records that don't match the filter criteria. Builds result list incrementally
-    by appending matching records to a mutable output list.
-    
-    Imperative characteristics:
-    - Explicit for-loop with manual iteration control
-    - Mutable accumulator (out) modified via append()
-    - continue statements for early loop exit
-    - Step-by-step conditional checks (if/continue pattern)
-    
-    Functional equivalent: filter(lambda r: all(predicates), data)
+    """Filter bank records by housing, loan and balance criteria.
     
     Args:
-        data: List of bank records (dictionaries) to filter
-        housing: If provided, keep only records matching this housing loan status
-        loan: If provided, keep only records matching this personal loan status
-        balance_gt: If provided, keep only records with balance > this value
+        data: Records to filter.
+        housing/loan: If set, keep only records matching the boolean value.
+        balance_gt: If set, keep only records with balance > balance_gt.
     
     Returns:
-        New list containing only records that pass all specified filters
-    
-    Example:
-        >>> records = [{'housing': True, 'balance': 1500}, {'housing': False, 'balance': 500}]
-        >>> _apply_filters(records, housing=True, loan=None, balance_gt=1000)
-        [{'housing': True, 'balance': 1500}]
+        New list with matching records.
     """
     out: List[Dict[str, Any]] = []
     for row in data:
@@ -116,24 +98,11 @@ def _success_overall(data: List[Dict[str, Any]]) -> Tuple[int, int, float]:
 def _mean(values: List[float]) -> Optional[float]:
     """Calculate arithmetic mean using explicit accumulation.
     
-    Imperative characteristics:
-    - Mutable accumulator variable (s) updated in loop
-    - Explicit for-loop iterating over values
-    - State changes through += operator
-    - Manual division after accumulation
-    
-    Functional equivalent: reduce(lambda acc, v: acc + v, values, 0.0) / len(values)
-    or simply: sum(values) / len(values)
-    
     Args:
-        values: List of numeric values to average
+        values: List of numeric values to average.
     
     Returns:
-        Mean value, or None if list is empty
-    
-    Example:
-        >>> _mean([10.0, 20.0, 30.0])
-        20.0
+        Mean value, or None if list is empty.
     """
     if not values:
         return None
@@ -148,6 +117,10 @@ def _mean(values: List[float]) -> Optional[float]:
 
 
 def _variance_population(values: List[float]) -> Optional[float]:
+    """Compute population variance (divide by N) using explicit accumulation.
+    
+    Returns None for an empty list or if mean is None.
+    """
     if not values:
         return None
     mu = _mean(values)
@@ -161,6 +134,10 @@ def _variance_population(values: List[float]) -> Optional[float]:
 
 
 def _duration_stats(data: List[Dict[str, Any]]) -> Tuple[Optional[int], Optional[int], Optional[float], Optional[float]]:
+    """Compute min, max, mean and population variance for call durations.
+    
+    Ignores missing/non-integer 'duration' values. Returns all None if no valid values exist.
+    """
     durations: List[int] = []
     for row in data:
         d = row.get("duration")
@@ -175,39 +152,19 @@ def _duration_stats(data: List[Dict[str, Any]]) -> Tuple[Optional[int], Optional
             mn = d
         if d > mx:
             mx = d
-    durations_f = [float(d) for d in durations]
+    durations_f: List[float] = []
+    for d in durations:
+        durations_f.append(float(d))
     return mn, mx, _mean(durations_f), _variance_population(durations_f)
 
 
 def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tuple[str, int, float]]:
-    """Distribute call durations into buckets and calculate success rate per bucket.
+    """Bucketize call durations and compute success rate per bucket.
     
-    Creates histogram-like buckets for call durations (e.g., 0-59s, 60-119s, etc.)
-    and computes the success rate (complete=True) for each bucket. This helps
-    identify optimal call duration ranges.
-    
-    Imperative characteristics:
-    - Multiple sequential for/while loops (find max, create buckets, populate, format)
-    - Mutable list of lists (mutable[idx][1] += 1) for in-place updates
-    - Index-based access and modification (mutable[idx][...])
-    - continue statements for skipping invalid data
-    - Explicit state management across multiple phases
-    
-    Functional equivalent: Use reduce() with immutable tuple accumulator,
-    or groupby() with map() for bucket assignment and aggregation.
-    
-    Args:
-        data: List of bank records with 'duration' and 'complete' fields
-        bucket_size: Size of each bucket in seconds (default: 60)
+    Ignores missing/non-integer 'duration'. Success is row['complete'] is True.
     
     Returns:
-        List of tuples: (bucket_label, total_count, success_rate)
-        Sorted by bucket start time
-    
-    Example:
-        >>> records = [{'duration': 45, 'complete': True}, {'duration': 120, 'complete': False}]
-        >>> _duration_buckets(records, 60)
-        [('   0-  59', 1, 1.0), ('  60- 119', 0, 0.0), (' 120- 179', 1, 0.0)]
+        List of (bucket_label, count, success_rate), sorted by bucket start.
     """
     if bucket_size <= 0:
         bucket_size = 60
@@ -229,7 +186,9 @@ def _duration_buckets(data: List[Dict[str, Any]], bucket_size: int) -> List[Tupl
         buckets.append((start, 0, 0))
         start += bucket_size
 
-    mutable = [[b[0], b[1], b[2]] for b in buckets]
+    mutable: List[List[int]] = []
+    for b in buckets:
+        mutable.append([b[0], b[1], b[2]])
 
     for row in data:
         d = row.get("duration")
@@ -283,6 +242,16 @@ def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[s
 
 
 def _group_metrics(data: List[Dict[str, Any]], key: str) -> List[Tuple[str, int, Optional[float], Optional[float], float]]:
+    """Group records by `key` and compute count, avg(age), avg(balance) and success rate.
+    
+    Args:
+        data: List of bank records to group.
+        key: Field to group by ('education', 'marital', 'job').
+    
+    Returns:
+        List of (group_name, count, avg_age, avg_balance, success_rate) tuples,
+        sorted alphabetically. Missing values excluded from averages.
+    """
     groups = _group_by_key(data, key)
     out: List[Tuple[str, int, Optional[float], Optional[float], float]] = []
     for group_name in sorted(groups.keys()):
@@ -306,6 +275,15 @@ def _group_metrics(data: List[Dict[str, Any]], key: str) -> List[Tuple[str, int,
 
 
 def _marital_compare(data: List[Dict[str, Any]]) -> List[Tuple[str, int, Optional[float], Optional[float], float]]:
+    """Compare marital status groups (single, married, divorced).
+    
+    Args:
+        data: List of bank records.
+    
+    Returns:
+        List of (status, count, avg_balance, avg_duration, success_rate) tuples
+        in order: single, married, divorced.
+    """
     order = ["single", "married", "divorced"]
     groups = _group_by_key(data, "marital")
     out: List[Tuple[str, int, Optional[float], Optional[float], float]] = []
@@ -330,6 +308,16 @@ def _marital_compare(data: List[Dict[str, Any]]) -> List[Tuple[str, int, Optiona
 
 
 def _compare_two_groups(data: List[Dict[str, Any]], key: str, g1: str, g2: str) -> Tuple[Tuple[str, int, Optional[float], Optional[float], Optional[float], float], Tuple[str, int, Optional[float], Optional[float], Optional[float], float]]:
+    """Compute detailed metrics for two groups (A/B) within a categorical field.
+    
+    Args:
+        data: List of bank records.
+        key: Field to compare ('education', 'marital', 'job').
+        g1, g2: Names of the two groups to compare.
+    
+    Returns:
+        Tuple of (group1_metrics, group2_metrics) with counts, averages, success rate.
+    """
     groups = _group_by_key(data, key)
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], Optional[float], float]:
@@ -358,36 +346,10 @@ def _compare_two_groups(data: List[Dict[str, Any]], key: str, g1: str, g2: str) 
 
 
 def _anova_f_balance(data: List[Dict[str, Any]], key: str) -> Optional[Tuple[float, int, int]]:
-    """Calculate ANOVA F-statistic for balance across groups.
-    
-    Performs one-way ANOVA to test if mean balance differs significantly across
-    groups (e.g., education levels, job types). The F-statistic compares variance
-    between groups to variance within groups.
-    
-    Imperative approach: Uses explicit loops to:
-    1. Extract balance values from each group
-    2. Calculate overall mean
-    3. Accumulate sum of squares between groups (ss_between)
-    4. Accumulate sum of squares within groups (ss_within)
-    5. Compute F-statistic from mean squares
-    
-    The calculation follows textbook ANOVA formula with explicit accumulation
-    of variance components.
-    
-    Args:
-        data: List of bank records
-        key: Field to group by (e.g., 'education', 'marital', 'job')
+    """Compute one-way ANOVA F-statistic for balance grouped by `key`.
     
     Returns:
-        Tuple of (F-statistic, df_between, df_within), or None if insufficient data
-        F > 1 suggests between-group variance exceeds within-group variance
-        Higher F values indicate more significant group differences
-    
-    Example:
-        >>> records = [{'education': 'primary', 'balance': 1000}, 
-        ...            {'education': 'tertiary', 'balance': 5000}]
-        >>> _anova_f_balance(records, 'education')
-        (8.0, 1, 0)  # F-statistic, degrees of freedom between, within
+        (F, df_between, df_within) or None if insufficient data.
     """
     groups = _group_by_key(data, key)
 
@@ -511,6 +473,11 @@ def _menu() -> str:
 
 
 def main() -> None:
+    """Run the interactive CLI for the bank marketing analysis.
+    
+    Loads the dataset, maintains an active working subset ("current"),
+    and dispatches menu actions (imperative version uses while-loop and if/elif).
+    """
     data = load_bank_data()
     current = list(data)
 
@@ -574,7 +541,9 @@ def main() -> None:
             if do_buckets:
                 bucket_size = _prompt_bucket_size()
                 buckets = _duration_buckets(current, bucket_size)
-                b_rows = [[label, str(cnt), _fmt_pct(rate)] for (label, cnt, rate) in buckets]
+                b_rows: List[List[str]] = []
+                for label, cnt, rate in buckets:
+                    b_rows.append([label, str(cnt), _fmt_pct(rate)])
                 print(_header("DURATION BUCKETS"))
                 print(_table(["bucket", "count", "success"], b_rows, aligns=["<", ">", ">"]))
 
@@ -597,7 +566,11 @@ def main() -> None:
         elif choice == "7":
             print(_header("VERGLEICH ZWEIER GRUPPEN"))
             field = _prompt_group_field("education")
-            available = sorted({(r.get(field) or "") for r in current})
+            available_set: set[str] = set()
+            for r in current:
+                val = r.get(field) or ""
+                available_set.add(val)
+            available = sorted(available_set)
             g1, g2 = _prompt_group_names(available)
             m1, m2 = _compare_two_groups(current, field, g1, g2)
 

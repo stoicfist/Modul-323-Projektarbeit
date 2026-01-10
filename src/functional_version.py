@@ -59,58 +59,21 @@ V = TypeVar('V')
 def compose(*fns: Callable) -> Callable:
     """Right-to-left function composition (mathematical convention).
     
-    Composes multiple functions into a single function, applying them from right
-    to left. This follows mathematical notation: (f ∘ g)(x) = f(g(x)).
-    
-    Functional approach: Uses reduce() to fold functions together, creating a new
-    function that applies each transformation in reverse order. This enables
-    declarative pipeline construction where operations read in mathematical order.
-    
-    The composition is lazy - no computation happens until the resulting function
-    is called with an argument. This allows for efficient function reuse and
-    clear separation between pipeline definition and execution.
+    Composes functions from right to left: compose(f, g, h)(x) = f(g(h(x))).
+    Uses reduce() to fold functions together, enabling declarative pipeline construction.
     
     Args:
-        *fns: Variable number of functions to compose. Each function should take
-              one argument (the output of the next function in the chain).
+        *fns: Variable number of functions to compose.
     
     Returns:
-        A new function that applies all input functions in right-to-left order.
-        If no functions provided, returns identity function.
+        A new function applying all inputs right-to-left. Identity if empty.
     
-    Examples:
-        >>> # Simple numeric transformations
+    Example:
         >>> add_10 = lambda x: x + 10
-        >>> multiply_2 = lambda x: x * 2
         >>> square = lambda x: x ** 2
-        >>> 
-        >>> # compose applies right-to-left: square(multiply_2(add_10(5)))
-        >>> transform = compose(square, multiply_2, add_10)
-        >>> transform(5)  # (5 + 10) * 2 = 30, then 30^2 = 900
-        900
-        
-        >>> # Data pipeline: filter then map
-        >>> positive = lambda nums: filter(lambda x: x > 0, nums)
-        >>> doubled = lambda nums: map(lambda x: x * 2, nums)
-        >>> to_list = lambda it: list(it)
-        >>> 
-        >>> # Reads mathematically: to_list(doubled(positive(data)))
-        >>> process = compose(to_list, doubled, positive)
-        >>> process([-2, -1, 0, 1, 2, 3])
-        [2, 4, 6]
-        
-        >>> # Bank data transformation pipeline
-        >>> extract_balance = lambda data: map(lambda r: r.get('balance', 0), data)
-        >>> filter_positive = lambda vals: filter(lambda x: x > 0, vals)
-        >>> compute_total = lambda vals: sum(vals)
-        >>> 
-        >>> total_positive_balance = compose(compute_total, filter_positive, extract_balance)
-        >>> records = [{'balance': 1000}, {'balance': -500}, {'balance': 2000}]
-        >>> total_positive_balance(records)
-        3000
-    
-    Note:
-        For left-to-right composition (Unix pipe style), use pipe() instead.
+        >>> transform = compose(square, add_10)
+        >>> transform(5)  # square(add_10(5)) = 225
+        225
     """
     def composed(arg: Any) -> Any:
         # reduce applies functions right-to-left by using reversed()
@@ -124,80 +87,21 @@ def compose(*fns: Callable) -> Callable:
 def pipe(*fns: Callable) -> Callable:
     """Left-to-right function composition (Unix pipe style).
     
-    Composes multiple functions into a single function, applying them from left
-    to right. This follows Unix pipe notation: data | fn1 | fn2 | fn3.
-    
-    Functional approach: Uses reduce() to fold functions together, creating a new
-    function that applies each transformation in the order they appear. This enables
-    intuitive pipeline construction where operations read like natural language or
-    Unix commands.
-    
-    The composition is lazy - no computation happens until the resulting function
-    is called with an argument. This is more intuitive than compose() for many
-    developers as it reads in execution order.
+    Composes functions from left to right: pipe(f, g, h)(x) = h(g(f(x))).
+    Uses reduce() to apply functions in sequence.
     
     Args:
-        *fns: Variable number of functions to compose. Each function should take
-              one argument (the output of the previous function in the chain).
+        *fns: Variable number of functions to compose.
     
     Returns:
-        A new function that applies all input functions in left-to-right order.
-        If no functions provided, returns identity function.
+        A new function applying all inputs left-to-right. Identity if empty.
     
-    Examples:
-        >>> # Simple numeric transformations
+    Example:
         >>> add_10 = lambda x: x + 10
-        >>> multiply_2 = lambda x: x * 2
         >>> square = lambda x: x ** 2
-        >>> 
-        >>> # pipe applies left-to-right: add_10(5), then multiply_2, then square
-        >>> transform = pipe(add_10, multiply_2, square)
-        >>> transform(5)  # (5 + 10) = 15, then * 2 = 30, then 30^2 = 900
-        900
-        
-        >>> # Data pipeline: reads like English "filter, then map, then collect"
-        >>> positive = lambda nums: filter(lambda x: x > 0, nums)
-        >>> doubled = lambda nums: map(lambda x: x * 2, nums)
-        >>> to_list = lambda it: list(it)
-        >>> 
-        >>> # Reads naturally: positive, then doubled, then to_list
-        >>> process = pipe(positive, doubled, to_list)
-        >>> process([-2, -1, 0, 1, 2, 3])
-        [2, 4, 6]
-        
-        >>> # Bank data ETL pipeline (Extract, Transform, Load)
-        >>> extract_balance = lambda data: map(lambda r: r.get('balance', 0), data)
-        >>> filter_positive = lambda vals: filter(lambda x: x > 0, vals)
-        >>> compute_total = lambda vals: sum(vals)
-        >>> 
-        >>> # Reads like steps: extract, filter, compute
-        >>> total_positive_balance = pipe(extract_balance, filter_positive, compute_total)
-        >>> records = [{'balance': 1000}, {'balance': -500}, {'balance': 2000}]
-        >>> total_positive_balance(records)
-        3000
-        
-        >>> # Complex bank marketing analysis
-        >>> has_housing_loan = lambda r: r.get('housing') is True
-        >>> high_balance = lambda r: r.get('balance', 0) > 1000
-        >>> extract_age = lambda r: r.get('age', 0)
-        >>> 
-        >>> analyze_customers = pipe(
-        ...     lambda data: filter(has_housing_loan, data),
-        ...     lambda data: filter(high_balance, data),
-        ...     lambda data: map(extract_age, data),
-        ...     lambda ages: list(ages),
-        ...     lambda ages: sum(ages) / len(ages) if ages else 0
-        ... )
-        >>> customers = [
-        ...     {'housing': True, 'balance': 1500, 'age': 30},
-        ...     {'housing': True, 'balance': 500, 'age': 25},
-        ...     {'housing': False, 'balance': 2000, 'age': 40}
-        ... ]
-        >>> analyze_customers(customers)  # Average age of housing loan customers with balance > 1000
-        30.0
-    
-    Note:
-        For right-to-left composition (mathematical style), use compose() instead.
+        >>> transform = pipe(add_10, square)
+        >>> transform(5)  # square(add_10(5)) = 225
+        225
     """
     def piped(arg: Any) -> Any:
         # reduce applies functions left-to-right (no reversed() needed)
@@ -384,6 +288,10 @@ def _mean(values: List[float]) -> Optional[float]:
 
 
 def _variance_population(values: List[float]) -> Optional[float]:
+    """Compute population variance (divide by N) using generator expression.
+    
+    Returns None for an empty list or if mean is None.
+    """
     if not values:
         return None
     mu = _mean(values)
@@ -393,6 +301,10 @@ def _variance_population(values: List[float]) -> Optional[float]:
 
 
 def _duration_stats(data: List[Dict[str, Any]]) -> Tuple[Optional[int], Optional[int], Optional[float], Optional[float]]:
+    """Compute min, max, mean and population variance for call durations.
+    
+    Uses filter/map pipeline to extract valid durations. Returns all None if no valid values exist.
+    """
     # Extract and filter valid duration values using functional pipeline
     durations = list(map(int, filter(lambda d: isinstance(d, int), (r.get("duration") for r in data))))
     if not durations:
@@ -545,6 +457,16 @@ def _group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, Tuple[Dict[
 
 
 def _group_metrics(data: List[Dict[str, Any]], key: str) -> List[Tuple[str, int, Optional[float], Optional[float], float]]:
+    """Group records by `key` and compute count, avg(age), avg(balance) and success rate.
+    
+    Args:
+        data: List of bank records to group.
+        key: Field to group by ('education', 'marital', 'job').
+    
+    Returns:
+        List of (group_name, count, avg_age, avg_balance, success_rate) tuples,
+        sorted alphabetically. Missing values excluded from averages.
+    """
     groups = _group_by_key(data, key)
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], float]:
@@ -560,6 +482,15 @@ def _group_metrics(data: List[Dict[str, Any]], key: str) -> List[Tuple[str, int,
 
 
 def _marital_compare(data: List[Dict[str, Any]]) -> List[Tuple[str, int, Optional[float], Optional[float], float]]:
+    """Compare marital status groups (single, married, divorced).
+    
+    Args:
+        data: List of bank records.
+    
+    Returns:
+        List of (status, count, avg_balance, avg_duration, success_rate) tuples
+        in order: single, married, divorced.
+    """
     groups = _group_by_key(data, "marital")
     order = ["single", "married", "divorced"]
 
@@ -576,6 +507,16 @@ def _marital_compare(data: List[Dict[str, Any]]) -> List[Tuple[str, int, Optiona
 
 
 def _compare_two_groups(data: List[Dict[str, Any]], key: str, g1: str, g2: str) -> Tuple[Tuple[str, int, Optional[float], Optional[float], Optional[float], float], Tuple[str, int, Optional[float], Optional[float], Optional[float], float]]:
+    """Compute detailed metrics for two groups (A/B) within a categorical field.
+    
+    Args:
+        data: List of bank records.
+        key: Field to compare ('education', 'marital', 'job').
+        g1, g2: Names of the two groups to compare.
+    
+    Returns:
+        Tuple of (group1_metrics, group2_metrics) with counts, averages, success rate.
+    """
     groups = _group_by_key(data, key)
 
     def metrics(name: str) -> Tuple[str, int, Optional[float], Optional[float], Optional[float], float]:
@@ -734,6 +675,11 @@ def _menu() -> str:
 
 
 def main() -> None:
+    """Run the interactive CLI for the bank marketing analysis.
+    
+    Loads the dataset, maintains an active working subset ("current"),
+    and dispatches menu actions (functional version uses match/case and pipelines).
+    """
     data = load_bank_data()
     current = list(data)
 
@@ -783,39 +729,26 @@ def main() -> None:
             case "3":
                 print(_header("TRANSFORMATIONEN"))
                 
-                # Declarative Pipeline Composition Demonstration:
-                # Each analysis is expressed as "WHAT to compute" rather than "HOW to compute it".
-                # The pipe() function chains transformations: data -> filter -> extract -> transform -> analyze -> format
-                # This makes the data flow explicit and eliminates intermediate variables.
-                
-                # Base pipeline: Extract valid balance values from records
+                # Pipeline composition: data -> filter -> extract -> transform -> analyze -> format
                 balance_pipeline = pipe(
-                    lambda records: filter(  # Keep only records with numeric balance
-                        lambda r: isinstance(r.get("balance"), (int, float)), 
-                        records
-                    ),
-                    lambda records: map(lambda r: float(r["balance"]), records),  # Extract as floats
-                    lambda it: list(it)  # Materialize lazy iterators
+                    lambda records: filter(lambda r: isinstance(r.get("balance"), (int, float)), records),
+                    lambda records: map(lambda r: float(r["balance"]), records),
+                    lambda it: list(it)
                 )
                 
-                # Transformation pipeline: Apply logarithmic transformation (handles zeros/negatives)
                 log_transform_pipeline = pipe(
-                    lambda vals: map(lambda b: math.log(b) if b > 0.0 else None, vals),  # log(x) for x > 0
-                    lambda vals: filter(lambda x: x is not None, vals),  # Remove invalid results
+                    lambda vals: map(lambda b: math.log(b) if b > 0.0 else None, vals),
+                    lambda vals: filter(lambda x: x is not None, vals),
                     lambda it: list(it)
                 )
                 
-                # Transformation pipeline: Apply polynomial transformation (always valid)
                 square_plus_one_pipeline = pipe(
-                    lambda vals: map(lambda b: b * b + 1.0, vals),  # x² + 1 for all values
+                    lambda vals: map(lambda b: b * b + 1.0, vals),
                     lambda it: list(it)
                 )
                 
-                # Higher-order function: Creates a stats computation pipeline for a named transformation
                 def create_stats_pipeline(name: str):
-                    """Returns pipeline: values -> statistics dict -> formatted table row"""
                     return pipe(
-                        # Compute all statistics declaratively (no intermediate variables)
                         lambda vals: {
                             'name': name,
                             'count': len(vals),
@@ -824,7 +757,6 @@ def main() -> None:
                             'mean': _mean(vals),
                             'var': _variance_population(vals)
                         },
-                        # Transform stats dict into formatted strings for table display
                         lambda stats: [
                             stats['name'],
                             str(stats['count']),
