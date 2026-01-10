@@ -521,8 +521,8 @@ def main() -> None:
             def stats_line(name: str, values: List[float]) -> List[str]:
                 mu = _mean(values)
                 var = _variance_population(values)
-                mn = min(values) if values else None
-                mx = max(values) if values else None
+                mn: Optional[float] = min(values) if values else None
+                mx: Optional[float] = max(values) if values else None
                 return [name, str(len(values)), _fmt_num(mn), _fmt_num(mx), _fmt_num(mu), _fmt_num(var)]
 
             rows = [

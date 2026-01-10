@@ -582,7 +582,7 @@ def _anova_f_balance(data: List[Dict[str, Any]], key: str) -> Optional[Tuple[flo
     if overall is None:
         return None
 
-    ss_between = sum(len(vals) * (_mean(vals) - overall) ** 2 for _, vals in group_values if _mean(vals) is not None)
+    ss_between = sum(len(vals) * (mu - overall) ** 2 for _, vals in group_values if (mu := _mean(vals)) is not None)
 
     def ss_within(vals: List[float]) -> float:
         mu = _mean(vals)

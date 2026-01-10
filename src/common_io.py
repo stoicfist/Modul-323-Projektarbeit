@@ -154,7 +154,7 @@ def _detect_delimiter(sample: str) -> str:
     Returns ',' or ';' based on the sample content.
     """
     try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=[",", ";"])
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;")
         if dialect.delimiter in {",", ";"}:
             return dialect.delimiter
     except csv.Error:
