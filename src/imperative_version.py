@@ -575,8 +575,21 @@ def main() -> None:
             m1, m2 = _compare_two_groups(current, field, g1, g2)
 
             def row(m: Tuple[str, int, Optional[float], Optional[float], Optional[float], float]) -> List[str]:
-                name, cnt, avg_age, avg_bal, avg_dur, rate = m
-                return [name or "(blank)", str(cnt), _fmt_num(avg_age, 1), _fmt_num(avg_bal, 2), _fmt_num(avg_dur, 1), _fmt_pct(rate)]
+                name = m[0]
+                cnt = m[1]
+                avg_age = m[2]
+                avg_bal = m[3]
+                avg_dur = m[4]
+                rate = m[5]
+                result: List[str] = []
+                result.append(name or "(blank)")
+                result.append(str(cnt))
+                result.append(_fmt_num(avg_age, 1))
+                result.append(_fmt_num(avg_bal, 2))
+                result.append(_fmt_num(avg_dur, 1))
+                result.append(_fmt_pct(rate))
+                
+                return result
 
             rows = [row(m1), row(m2)]
             print(_table([field, "count", "avg(age)", "avg(balance)", "avg(duration)", "success"], rows, aligns=["<", ">", ">", ">", ">", ">"]))
