@@ -157,6 +157,55 @@ funktionale Sprachelemente aus der Standardbibliothek:
 Diese Elemente ermöglichen eine deklarative und kompakte Beschreibung
 von Datenverarbeitungslogik.
 
+\subsection{Funktionale Sprachelemente in Python – Detailanalyse}
+
+Neben den grundlegenden funktionalen Sprachelementen weist Python im Vergleich zu
+rein funktionalen Sprachen sowohl konzeptionelle Stärken als auch Einschränkungen auf.
+
+\paragraph{Higher-Order Functions}
+
+Python unterstützt Higher-Order Functions nativ, allerdings mit einigen
+charakteristischen Besonderheiten:
+
+\begin{itemize}
+    \item \texttt{map()} und \texttt{filter()} liefern Iteratoren und arbeiten damit
+    lazily. Dies spart Speicher, verhindert jedoch ein mehrfaches Durchlaufen
+    derselben Daten ohne explizite Materialisierung (z.\,B. mittels \texttt{list()}).
+
+    \item \texttt{reduce()} wurde seit Python~3 in das Modul \texttt{functools}
+    ausgelagert. Diese Designentscheidung reflektiert, dass in Python explizite
+    Schleifen oder spezielle Aggregatfunktionen (\texttt{sum}, \texttt{min}, \texttt{max})
+    häufig als besser lesbar angesehen werden.
+\end{itemize}
+
+Im Projekt wird \texttt{reduce()} dennoch bewusst eingesetzt, um die funktionale
+Aggregation explizit sichtbar zu machen (z.\,B. bei der Gruppierung von Datensätzen
+oder der Berechnung von Buckets).
+
+\paragraph{Limitierungen gegenüber Haskell}
+
+Im Vergleich zu rein funktionalen Sprachen wie Haskell weist Python mehrere
+Einschränkungen auf:
+
+\begin{itemize}
+    \item Keine Tail-Call-Optimierung: Rekursive Funktionen sind durch eine
+    begrenzte Rekursionstiefe (ca. 1000 Aufrufe) eingeschränkt und daher für
+    viele funktionale Muster ungeeignet.
+
+    \item Mutable Default Arguments können unbeabsichtigte Seiteneffekte
+    verursachen und widersprechen dem Prinzip der funktionalen Reinheit.
+
+    \item Kein echtes Pattern Matching auf Funktionsebene; erst ab Python~3.10
+    steht mit \texttt{match/case} ein strukturelles Matching für Kontrollflüsse zur Verfügung,
+    das jedoch nicht die Ausdrucksstärke funktionaler Pattern Matches erreicht.
+\end{itemize}
+
+Damit wird deutlich, dass Python funktionale Konzepte eher als ergänzende
+Sprachmittel bereitstellt, nicht jedoch als tragendes Paradigma erzwingt.
+Die funktionale Programmierung in Python beruht daher stärker auf
+Programmierdisziplin als auf sprachlicher Absicherung durch den Compiler.
+
+
 \subsubsection{Kurzbeispiele der funktionalen Elemente}
 
 \begin{lstlisting}[language=Python]
