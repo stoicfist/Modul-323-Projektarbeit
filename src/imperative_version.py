@@ -501,7 +501,7 @@ def main() -> None:
     current = list(data)
 
     print(header("BANK MARKETING – CLI"))
-    print(f"Datensätze geladen: {len(data)}")
+    print(f"{f'Datensätze geladen: {len(data)}'.center(72)}")
 
     while True:
         choice = _menu()
