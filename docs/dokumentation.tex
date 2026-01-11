@@ -124,6 +124,7 @@ im Refactoring-Vergleich in Abschnitt~\ref{sec:refactoring} analysiert.
 % ======================================================
 \section{Wahl der imperativen Programmiersprache}
 
+
 \subsection{Begründung der Sprachwahl}
 
 Für dieses Projekt wurde die Programmiersprache \textbf{Python} gewählt.
@@ -139,6 +140,7 @@ Python eignet sich besonders gut für Datenanalysen, da die Sprache:
 Da Python sowohl imperative als auch funktionale Konzepte vereint, ist die
 Sprache ideal geeignet, um beide Programmierparadigmen direkt miteinander
 zu vergleichen.
+
 
 \subsection{Unterstützte funktionale Elemente in Python}
 
@@ -156,6 +158,7 @@ funktionale Sprachelemente aus der Standardbibliothek:
 
 Diese Elemente ermöglichen eine deklarative und kompakte Beschreibung
 von Datenverarbeitungslogik.
+
 
 \subsection{Funktionale Sprachelemente in Python – Detailanalyse}
 
@@ -205,7 +208,6 @@ Sprachmittel bereitstellt, nicht jedoch als tragendes Paradigma erzwingt.
 Die funktionale Programmierung in Python beruht daher stärker auf
 Programmierdisziplin als auf sprachlicher Absicherung durch den Compiler.
 
-
 \subsubsection{Kurzbeispiele der funktionalen Elemente}
 
 \begin{lstlisting}[language=Python]
@@ -231,6 +233,7 @@ Diese funktionalen Konzepte werden im Projekt konkret eingesetzt für:
 \section{Datengrundlage}
 \label{sec:datengrundlage}
 
+
 \subsection{Beschreibung des Datensatzes}
 
 Als Datengrundlage dient ein Bank-Marketing-Datensatz einer portugiesischen Bank,
@@ -242,6 +245,7 @@ welche angibt, ob ein Produktabschluss erfolgt ist (\texttt{complete = yes/no}).
 Die Daten liegen in Form einer CSV-Datei vor und wurden im Projekt ausschließlich
 lesend verwendet.
 
+
 \subsection{Hauptdimensionen}
 
 Der Datensatz lässt sich in folgende Hauptdimensionen einteilen:
@@ -252,6 +256,7 @@ Der Datensatz lässt sich in folgende Hauptdimensionen einteilen:
     \item \textbf{Kontaktdaten:} Gesprächsdauer (\texttt{duration})
     \item \textbf{Ergebnisvariable:} Produktabschluss (\texttt{complete})
 \end{itemize}
+
 
 \subsection{Verwendete Variablen}
 
@@ -268,6 +273,7 @@ Im Projekt werden unter anderem folgende Variablen verwendet:
     \item \texttt{duration} (numerisch)
     \item \texttt{complete} (binär, Zielvariable)
 \end{itemize}
+
 
 \subsection{Herkunft des Datensatzes und Abgrenzung}
 
@@ -292,6 +298,7 @@ im Sinne des Moduls M323 – Funktionales Programmieren.
 % ======================================================
 \section{Projektantrag}
 
+
 \subsection{Ausgangslage}
 
 Während einer Marketingkampagne hat eine Bank verschiedene Kundendaten
@@ -300,6 +307,7 @@ direkt für Analysen aufbereitet.
 
 Ziel ist es, relevante Kennzahlen zu berechnen, Kundengruppen zu vergleichen
 und statistische Zusammenhänge zu untersuchen.
+
 
 \subsection{Zielsetzung}
 
@@ -312,6 +320,7 @@ Das Projekt verfolgt folgende Ziele:
     \item Refactoring in eine funktionale Version (V2.0)
     \item Vergleich beider Ansätze hinsichtlich Lesbarkeit und Wartbarkeit
 \end{itemize}
+
 
 \subsection{Projektumfang}
 
@@ -330,6 +339,7 @@ Das Projekt umfasst:
 Beide Versionen des Programms erzeugen identische Resultate für die zentralen
 Produktfunktionen und Kernanalysen.
 Die Ausgabe erfolgt textbasiert in der Konsole.
+
 
 \subsection{Beispielhafter Output}
 
@@ -397,6 +407,7 @@ dass die Unterschiede zwischen beiden Programmen ausschließlich in der
 Programmstruktur und im verwendeten Paradigma liegen, nicht jedoch in den
 berechneten Ergebnissen.
 
+
 \subsection{Interpretation und statistische Einordnung}
 
 Die Ergebnisse zeigen, dass der durchschnittliche Kontostand sowie die
@@ -435,6 +446,7 @@ Version 1.0 verwendet primär imperative Sprachmittel (Schleifen, Hilfsvariablen
 von Resultaten), während Version 2.0 die gleiche Logik mit funktionalen Sprachmitteln
 (z.\,B. \texttt{map}, \texttt{filter}, \texttt{reduce}, Lambdas) ausdrückt.
 
+
 \subsection{Konkrete Beispiele aus dem Projekt}
 
 \subsubsection{Beispiel A: Filtern von Datensätzen}
@@ -450,7 +462,6 @@ In Version 2.0 wird dieselbe Logik deklarativ als Prädikatfunktion formuliert u
     caption={Imperative Filterung mittels Schleifen und Kontrollfluss aus \texttt{imperative\_version.py}},
     label={lst:apply_filters_imperative}
   ]
-
 def apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
 
     out: List[Dict[str, Any]] = []
@@ -477,7 +488,6 @@ def apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Opt
     caption={Funktionale Filterung mittels Prädikatfunktion und \texttt{filter} aus \texttt{functional\_version.py}},
     label={lst:apply_filters_functional}
   ]
-
 def apply_filters(data: List[Dict[str, Any]], housing: Optional[bool], loan: Optional[bool], balance_gt: Optional[float]) -> List[Dict[str, Any]]:
 
     def pred(row: Dict[str, Any]) -> bool:
@@ -525,7 +535,6 @@ Akkumulator als unveränderliche Struktur behandelt und bei jedem Schritt neu er
     caption={Imperative Gruppierung mit Schleifen und veränderlichem Zustand aus \texttt{imperative\_version.py}},
     label={lst:group_by_imperative}
   ]
-
 def group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[str, Any]]]:
 
       groups: Dict[str, List[Dict[str, Any]]] = {}
@@ -538,6 +547,7 @@ def group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[st
       return groups
 \end{lstlisting}
 
+\newpage
 \paragraph{Funktionale Umsetzung (Version 2.0)}\mbox{}
 
 \begin{lstlisting}[
@@ -547,7 +557,6 @@ def group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, List[Dict[st
     caption={Funktionale Gruppierung mit \texttt{reduce} aus \texttt{functional\_version.py}},
     label={lst:group_by_reduce}
   ]
-
 def group_by_key(data: List[Dict[str, Any]], key: str) -> Dict[str, Tuple[Dict[str, Any], ...]]:
 
     def add(acc: Dict[str, Tuple[Dict[str, Any], ...]], row: Dict[str, Any]) -> Dict[str, Tuple[Dict[str, Any], ...]]:
@@ -587,6 +596,7 @@ Schleifen oder veränderliche Akkumulatoren umgesetzt werden können.
 Zunächst werden alle Werte mittels \texttt{map} in Gleitkommazahlen transformiert,
 anschließend erfolgt die Aggregation über \texttt{sum}.
 
+\newpage
 \paragraph{Imperative Umsetzung (Version 1.0)}\mbox{}
 
 \begin{lstlisting}[
@@ -596,7 +606,6 @@ anschließend erfolgt die Aggregation über \texttt{sum}.
     caption={Imperative Berechnung des arithmetischen Mittels mit expliziter Schleife aus \texttt{imperative\_version.py}},
     label={lst:mean_imperative}
   ]
-
 def mean(values: List[float]) -> Optional[float]:
 
     if not values:
@@ -620,7 +629,6 @@ def mean(values: List[float]) -> Optional[float]:
     caption={Funktionale Berechnung des arithmetischen Mittels mit \texttt{map} und \texttt{sum} aus \texttt{functional\_version.py}},
     label={lst:mean_functional}
   ]
-
 def mean(values: List[float]) -> Optional[float]:
 
     return (sum(map(float, values)) / float(len(values))) if values else None
@@ -649,11 +657,13 @@ mathematischen Definition des Mittelwerts und ist kompakter sowie leichter zu le
 % ======================================================
 \section{Fazit}
 
+
 \subsection{Nutzen funktionaler Elemente}
 
 Der Einsatz funktionaler Sprachelemente hat in diesem Projekt mehrere
 Vorteile gebracht. Insbesondere Filter- und Transformationsoperationen
 konnten kompakter und klarer formuliert werden.
+
 
 \subsection{Vereinfachung durch Refactoring}
 
@@ -665,6 +675,7 @@ Selektion und Aggregation klar voneinander trennen.
 Der Fokus liegt somit weniger auf der reinen Code-Länge,
 sondern auf Lesbarkeit, Wartbarkeit und einer geringeren
 Fehleranfälligkeit.
+
 
 \subsection{Kritische Evaluation: Grenzen und Trade-offs der funktionalen Umsetzung}
 
@@ -755,6 +766,7 @@ Die funktionale Version ist damit im Projekt primär als didaktisches und
 architektonisches Vergleichsmodell zu verstehen; für Produktionscode wären je
 nach Kontext hybride Lösungen (funktionale Pipelines bei gleichzeitiger
 pragmatischer Mutation in Hotspots) naheliegend.
+
 
 
 \subsection{Bewusste Designentscheidungen}
@@ -889,20 +901,21 @@ Projekt-Repository:
 \href{https://github.com/stoicfist/Modul-323-Projektarbeit}{https://github.com/stoicfist/Modul-323-Projektarbeit}
 
 \end{thebibliography}
-
-
 \vspace{1em}
-\newline
+
+
 \textit{Hinweis:} Der vollständige Quellcode wurde in dieser Dokumentation bewusst
 nicht vollständig abgedruckt, um den Fokus auf Konzept und Vergleich zu legen
 (vgl. \cite{github}).
 
 \section{Appendix}
 
+
 \subsection{Projekt-Repository}
 
 Der vollständige Quellcode des Projekts ist im öffentlichen GitHub-Repository
 verfügbar (vgl. \cite{github}).
+
 
 \subsection{Weitere Beispielausgaben}
 \label{sec:appendix-output}
@@ -933,6 +946,7 @@ Interpretation: Deutliche Unterschiede der Mittelwerte zwischen Gruppen möglich
 (hoher F-Wert).
 \end{verbatim}
 
+\newpage
 \subsubsection{Menüoption 1: Erfolgsquote gesamt}
 \begin{verbatim}
 ========================================================================
@@ -945,6 +959,7 @@ Yes    |   4137
 Quote  |  55.4%
 \end{verbatim}
 
+\newpage
 \subsection{Interaktive Konsolen-Ausführung (CLI)}
 
 Neben der Ausführung im Jupyter Notebook kann das Programm auch direkt als
@@ -984,7 +999,5 @@ secondary |  3815 |     40.7 |      1709.54 |         387.2 |   52.2%
 Δ Erfolgsquote (A-B): +10.3%
 
 \end{verbatim}
-
-
 
 \end{document}
