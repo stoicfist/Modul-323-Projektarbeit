@@ -660,6 +660,97 @@ Der Fokus liegt somit weniger auf der reinen Code-Länge,
 sondern auf Lesbarkeit, Wartbarkeit und einer geringeren
 Fehleranfälligkeit.
 
+\subsection{Kritische Evaluation: Grenzen und Trade-offs der funktionalen Umsetzung}
+
+Die funktionale Version bringt konzeptionelle Vorteile in Bezug auf
+Strukturierung und Ausdrucksstärke, geht jedoch auch mit messbaren
+Nachteilen einher, die im Projekt klar sichtbar wurden.
+
+\paragraph{Performance-Trade-offs}
+
+Die Funktion \texttt{group\_by\_key} verwendet in der funktionalen
+Implementierung ausschließlich immutable Datenstrukturen.
+Bei jedem Reduktionsschritt wird ein neues Dictionary mittels
+\texttt{\{**acc, key: value\}} erzeugt. Dadurch müssen alle bereits
+gesammelten Einträge kopiert werden.
+
+Dies führt zu einer Zeitkomplexität von $\mathcal{O}(n^2)$, während die
+imperative Version durch direkte Mutation des Dictionaries eine
+$\mathcal{O}(n)$-Komplexität erreicht.
+Bei einem Datensatz mit 7474 Einträgen ist dieser Unterschied zwar noch
+praktisch handhabbar, skaliert jedoch schlecht für größere Datenmengen.
+
+Die funktionale Variante ist somit primär didaktisch sinnvoll, stellt
+aber keine performante Produktionslösung dar.
+
+\paragraph{Quantitativer Vergleich der Implementierungen}
+
+Zur objektiven Bewertung wurden beide Versionen hinsichtlich einiger
+Metriken verglichen:
+
+\begin{center}
+\begin{tabular}{lrr}
+\textbf{Metrik} & \textbf{Imperativ} & \textbf{Funktional} \\
+\hline
+LOC (ohne Docstrings/Kommentare/Leerzeilen) & 434 & 396 \\
+Durchschnittliche Funktionslänge (LOC)     & 21.15 & 11.89 \\
+Maximale Verschachtelungstiefe (AST-Blöcke) & 13 & 6 \\
+\end{tabular}
+\end{center}
+
+Die Kennzahlen wurden automatisiert aus dem Quelltext bestimmt
+(\texttt{tests/metrics.py}). Dabei werden physische Codezeilen ohne Leerzeilen,
+Kommentare und Docstrings gezählt; Funktionslängen basieren auf
+\texttt{lineno/end\_lineno} des Python-AST.
+
+Die Messwerte zeigen, dass die funktionale Version in diesem Projekt
+\emph{nicht länger}, sondern sogar etwas \emph{kürzer} ausfällt (396 vs.\ 434 LOC).
+Der deutlichere Unterschied liegt jedoch in der \textbf{Struktur}:
+
+\begin{itemize}
+    \item Die imperative Version weist eine deutlich höhere maximale Verschachtelungstiefe auf (13 vs.\ 6).
+          Dies entsteht vor allem durch die stärker kontrollflussgetriebene Umsetzung
+          (mehrstufige Schleifen-/If-Kombinationen und Menülogik).
+    \item Die durchschnittliche Funktionslänge ist in der imperativen Version fast doppelt so hoch (21.15 vs.\ 11.89 LOC),
+          was auf größere, monolithischere Funktionsblöcke hindeutet.
+\end{itemize}
+
+Die funktionale Version verteilt Logik häufiger auf kleinere Funktionen und nutzt
+Komposition (z.\,B.\ \texttt{pipe}/\texttt{compose}) sowie deklarative Operationen
+(\texttt{map}/\texttt{filter}/\texttt{reduce}). Dadurch sinken im Mittel Funktionslänge
+und Verschachtelung, auch wenn einzelne funktionale Konstrukte für Ungeübte
+weniger intuitiv sein können.
+
+\paragraph{Kognitive Komplexität}
+
+Ein Nachteil ist die höhere Einstiegshürde:
+Konstrukte wie \texttt{reduce}, Funktionenkombinationen
+(\texttt{pipe}, \texttt{compose}) und verschachtelte Lambdas sind für viele
+Entwickelnde weniger direkt nachvollziehbar als klassische Schleifen.
+In Teams ohne funktionale Erfahrung kann die imperative Version daher
+zunächst wartungsfreundlicher wirken, obwohl sie strukturell stärker
+verschachtelt ist.
+
+\paragraph{Fazit der kritischen Betrachtung}
+
+Die funktionale Umsetzung bietet in diesem Projekt messbare Vorteile in Bezug auf
+geringere Verschachtelung und kürzere Funktionen, kann jedoch zu folgenden
+Trade-offs führen:
+
+\begin{itemize}
+    \item höherer Abstraktionsgrad und damit höhere Einstiegshürde,
+    \item potenziell schlechtere Laufzeit bei strikt immutablen Mustern
+          (z.\,B.\ Dictionary-Kopien in \texttt{group\_by\_key}),
+    \item Debugging kann bei stark verschachtelter Komposition schwieriger sein
+          als bei linearem Kontrollfluss.
+\end{itemize}
+
+Die funktionale Version ist damit im Projekt primär als didaktisches und
+architektonisches Vergleichsmodell zu verstehen; für Produktionscode wären je
+nach Kontext hybride Lösungen (funktionale Pipelines bei gleichzeitiger
+pragmatischer Mutation in Hotspots) naheliegend.
+
+
 \subsection{Bewusste Designentscheidungen}
 
 Im Rahmen der Transformation numerischer Variablen wurden bewusst unterschiedliche
@@ -680,16 +771,36 @@ Dadurch konnte der Fokus im Projekt gezielt auf den Vergleich funktionaler
 Programmierkonzepte gelegt werden, ohne die Darstellung durch zusätzliche
 Randfallbehandlung zu verkomplizieren.
 
+
 \subsection{Wiederverwendung funktionaler Konzepte}
 
-Die funktionalen Konzepte würden in zukünftigen Projekten erneut
-eingesetzt werden, insbesondere bei:
+Die im Projekt eingesetzten funktionalen Konzepte eignen sich auch für
+zukünftige Datenanalyse- und Auswertungsprojekte und würden insbesondere
+in folgenden Bereichen erneut verwendet werden:
 
 \begin{itemize}
-    \item Datenfiltern
-    \item Aggregationen
-    \item Transformationen von Listen und Datensätzen
+    \item \textbf{Datenfilterung} über Prädikatfunktionen und deren Kombination
+    (z.\,B. mittels \texttt{filter()}, \texttt{combine\_predicates}).
+
+    \item \textbf{Gruppierung von Datensätzen} durch funktionale Faltungen
+    (z.\,B. \texttt{group\_by\_key} mit \texttt{reduce}).
+
+    \item \textbf{Aggregation und Kennzahlenberechnung}, etwa für Mittelwerte,
+    Varianzen oder Erfolgsquoten (\texttt{mean}, ANOVA, Zähloperationen).
+
+    \item \textbf{Transformation von Datenpipelines} durch funktionale
+    Verkettung von Verarbeitungsschritten (\texttt{pipe}, \texttt{compose}).
+
+    \item \textbf{Kapselung von Logik in Higher-Order Functions}, z.\,B. durch
+    Funktionen, die andere Funktionen erzeugen (\texttt{create\_balance\_filter}).
+
+    \item \textbf{Nebenwirkungsfreie Datenverarbeitung} durch den Einsatz
+    unveränderlicher Datenstrukturen (Tupel, neue Dictionaries statt Mutation).
+
+    \item \textbf{Testbarkeit und Vergleichbarkeit}, da reine Funktionen leicht
+    automatisiert getestet und zwischen Implementierungen verglichen werden können.
 \end{itemize}
+
 
 \subsection{Grenzen funktionaler Elemente in Python}
 
