@@ -307,7 +307,8 @@ ANOVA F-Wert: 41.93 (df=2,7471)
 \end{lstlisting}
 
 \textit{Hinweis:} Version 1.0 (imperativ) und Version 2.0 (funktional)
-liefern identische Resultate.
+liefern identische Resultate. Weitere exemplarische Konsolenausgaben zu anderen
+Menüoptionen befinden sich im Appendix (vgl. Abschnitt~\ref{sec:appendix-output}).
 
 \subsection{Validierung der Resultate}
 Die automatisierten Tests befinden sich im Verzeichnis \texttt{tests/} und können
@@ -692,7 +693,7 @@ Die notwendigen Schritte zur Ausführung sind im Repository dokumentiert.
 
 
 % ======================================================
-\section*{Hinweis zur Entstehung der Arbeit}
+\section{Hinweis zur Entstehung der Arbeit}
 
 Zur Unterstützung bei der Dokumentation und beim Refactoring wurden
 KI-basierte Werkzeuge konsultiert.
@@ -736,7 +737,51 @@ nicht vollständig abgedruckt, um den Fokus auf Konzept und Vergleich zu legen
 
 \section{Appendix}
 
+\subsection{Projekt-Repository}
 
+Der vollständige Quellcode des Projekts ist im öffentlichen GitHub-Repository
+verfügbar (vgl. \cite{github}).
+
+\subsection{Weitere Beispielausgaben}
+\label{sec:appendix-output}
+
+\subsubsection{Menüoption 7: Vergleich zweier Gruppen}
+\begin{verbatim}
+Verfügbare Gruppen in 'education': primary, secondary, tertiary
+
+========================================================================
+                        VERGLEICH ZWEIER GRUPPEN
+========================================================================
+education | count | avg(age) | avg(balance) | avg(duration) | success
+----------+-------+----------+--------------+---------------+--------
+tertiary  |  2657 |     39.7 |      2404.61 |         382.4 |   62.5%
+secondary |  3815 |     40.7 |      1709.54 |         387.2 |   52.2%
+
+Δ Erfolgsquote (A-B): +10.3%
+\end{verbatim}
+
+\subsubsection{Menüoption 8: ANOVA-Auswertung}
+\begin{verbatim}
+========================================================================
+                    ANOVA-ÄHNLICHER F-WERT (BALANCE)
+========================================================================
+F(2, 7471) = 41.928
+
+Interpretation: Deutliche Unterschiede der Mittelwerte zwischen Gruppen möglich
+(hoher F-Wert).
+\end{verbatim}
+
+\subsubsection{Menüoption 1: Erfolgsquote gesamt}
+\begin{verbatim}
+========================================================================
+                              ERFOLGSQUOTE
+========================================================================
+Metric |  Value
+-------+-------
+Total  |   7474
+Yes    |   4137
+Quote  |  55.4%
+\end{verbatim}
 
 
 \end{document}
