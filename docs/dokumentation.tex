@@ -327,7 +327,8 @@ Das Projekt umfasst:
 % ======================================================
 \section{Programmausgabe}
 
-Beide Versionen des Programms erzeugen denselben Output.
+Beide Versionen des Programms erzeugen identische Resultate für die zentralen
+Produktfunktionen und Kernanalysen.
 Die Ausgabe erfolgt textbasiert in der Konsole.
 
 \subsection{Beispielhafter Output}
@@ -364,7 +365,7 @@ Die automatisierten Tests befinden sich im Verzeichnis \texttt{tests/} und könn
 direkt über die Kommandozeile ausgeführt werden:
 
 \begin{verbatim}
-python test_outputs.py
+python tests/test_outputs.py
 \end{verbatim}
 
 Zur Validierung wurden mehrere automatisierte Tests implementiert, welche die
@@ -572,6 +573,11 @@ auf einen neuen Akkumulator und vermeidet dabei mutierende Operationen.
 Dadurch wird die Gruppierungslogik deklarativer und lässt sich direkt für mehrere Auswertungen
 wiederverwenden (z.\,B. Bildung, Beruf oder Familienstand).
 
+Darüber hinaus ist diese Gruppierungsfunktion kein isoliertes Demonstrationsbeispiel, sondern
+ein zentrales Bestandteil der Produktfunktionalität des Programms. Sie wird unter anderem in
+den Menüoptionen 5 (Group by education), 6 (Group by marital) sowie 7 (Vergleich zweier Gruppen)
+verwendet, um die Datensätze nach unterschiedlichen Kategorien zu gruppieren und darauf
+aufbauend aggregierte Kennzahlen zu berechnen.
 
 \subsubsection{Beispiel C: Transformation und Aggregation numerischer Werte (\texttt{map} und \texttt{sum})}
 
@@ -973,13 +979,14 @@ Auswahl: 7
 Gruppierungsfeld (education/marital/job) [Default: education]:
 Verfügbare Gruppen:
 primary, secondary, tertiary
-Gruppe A: secondary
-Gruppe B: tertiary
+Gruppe A: tertiary
+Gruppe B: secondary
 education | count | avg(age) | avg(balance) | avg(duration) | success
 ----------+-------+----------+--------------+---------------+--------
-secondary |  3815 |     40.7 |      1709.54 |         387.2 |   52.2%
 tertiary  |  2657 |     39.7 |      2404.61 |         382.4 |   62.5%
-Δ Erfolgsquote (A-B): -10.3%
+secondary |  3815 |     40.7 |      1709.54 |         387.2 |   52.2%
+Δ Erfolgsquote (A-B): +10.3%
+
 \end{verbatim}
 
 
