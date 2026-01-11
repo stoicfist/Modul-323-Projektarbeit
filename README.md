@@ -6,8 +6,8 @@ Dieses Projekt analysiert einen Bank-Marketing-Datensatz aus Portugal. Ziel ist 
 
 Das Projekt wird im Rahmen des Moduls **M323 – Funktionales Programmieren** umgesetzt und besteht aus zwei Versionen:
 
-- **Version 1.0:** Imperative Umsetzung
-- **Version 2.0:** Funktional refactored (map, filter, reduce)
+- **Version 2.2.1 (imperativ):** Explizite Schleifen, mutable State, continue-Statements
+- **Version 2.1.1 (funktional):** map, filter, reduce, compose, pipe, Prädikat-Komposition
 
 ---
 
@@ -82,8 +82,22 @@ Das Projekt wird in **Python** umgesetzt und in einem **Jupyter Notebook** ausge
 Es werden ausschließlich Funktionen der Python-Standardbibliothek verwendet, ohne externe Frameworks oder Libraries.  
 Die Benutzeroberfläche besteht aus einer textbasierten Konsolenausgabe.
 
-In Version 1.0 kommen imperative Sprachmittel wie Schleifen, if-Anweisungen, Variablen und manuelle Aggregationen zum Einsatz.  
-Version 2.0 nutzt funktionale Sprachmittel wie `map`, `filter`, `reduce` (aus `functools`), Lambda-Funktionen sowie Listen-Comprehensions.
+**Version 2.2.1 (imperativ)** verwendet imperative Sprachmittel:
+
+- Explizite `for`-Schleifen und `while`-Schleifen
+- `continue`-Statements für Early Exit
+- Mutable State (Variablen, Listen)
+- Index-basierte Manipulation
+- Manuelle Akkumulation und schrittweise Aggregation
+
+**Version 2.1.1 (funktional)** nutzt funktionale Sprachmittel:
+
+- Higher-Order Functions: `map()`, `filter()`, `reduce()`
+- Funktionskomposition: `compose()` (rechts-nach-links), `pipe()` (links-nach-rechts)
+- Prädikat-Komposition: `combine_predicates()` für deklarative Filterbedingungen
+- Higher-Order Filter Functions: `create_balance_filter()`
+- Lambda-Funktionen und Listen-Comprehensions
+- Immutable Data Flow und Pure Functions
 
 Die Projektdokumentation wird vollständig in **LaTeX (Overleaf)** erstellt, um eine saubere, reproduzierbare und kollaborative Zusammenarbeit im Team zu ermöglichen.
 
@@ -235,6 +249,7 @@ Nach der Aktivierung ist die Umgebung am Shell-Prefix erkennbar, z. B.:
 ```
 
 ---
+
 ## Output (Beispiel)
 
 Die Applikation gibt die Resultate als formatierten Text auf der Konsole aus.
@@ -244,7 +259,7 @@ Die Applikation gibt die Resultate als formatierten Text auf der Konsole aus.
 ```
 Verfügbare Gruppen in 'education': primary, secondary, tertiary
 ========================================================================
-                        VERGLEICH ZWEIER GRUPPEN                        
+                        VERGLEICH ZWEIER GRUPPEN
 ========================================================================
 education | count | avg(age) | avg(balance) | avg(duration) | success
 ----------+-------+----------+--------------+---------------+--------
@@ -254,7 +269,7 @@ secondary |  1640 |     38.8 |      1641.63 |         410.9 |   42.1%
 Δ Erfolgsquote (A-B): +7.9%
 
 ========================================================================
-                           GROUP BY EDUCATION                           
+                           GROUP BY EDUCATION
 ========================================================================
 education | count | avg(age) | avg(balance) | success
 ----------+-------+----------+--------------+--------
@@ -266,12 +281,14 @@ ANOVA F-Wert: 23.61 (df=2,2907)
 ```
 
 ---
+
 ## Dokumentation (Overleaf)
 
 Die Projektdokumentation wird separat in **LaTeX** auf **Overleaf** erstellt.  
 Overleaf ermöglicht eine kollaborative Bearbeitung der Dokumentation im Team sowie eine konsistente und reproduzierbare PDF-Erstellung.
 
 Die Dokumentation umfasst unter anderem:
+
 - Projektantrag
 - Beschreibung der Datengrundlage und Produktfunktionen
 - Vergleich der imperativen und funktionalen Umsetzung
@@ -281,8 +298,10 @@ Die Dokumentation umfasst unter anderem:
 Der Code und die Dokumentation werden bewusst getrennt geführt, um eine klare Struktur zwischen Implementierung und schriftlicher Ausarbeitung sicherzustellen.
 
 ---
+
 ## Hinweise
 
-- Version 1.0 und Version 2.0 erzeugen denselben Output
+- Version 2.2.1 (imperativ) und Version 2.1.1 (funktional) erzeugen denselben Output
 - Der Fokus liegt auf dem Vergleich imperativer und funktionaler Programmieransätze
+- Beide Versionen sind vollständig in Jupyter Notebooks dokumentiert und ausführbar
 - Das Projekt ist für Partnerarbeit konzipiert
