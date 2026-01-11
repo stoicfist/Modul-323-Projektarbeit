@@ -783,5 +783,45 @@ Yes    |   4137
 Quote  |  55.4%
 \end{verbatim}
 
+\subsection{Interaktive Konsolen-Ausführung (CLI)}
+
+Neben der Ausführung im Jupyter Notebook kann das Programm auch direkt als
+Python-Skript gestartet werden. Dabei wird eine textbasierte Benutzeroberfläche
+angezeigt, welche die Bedienung über ein Menü ermöglicht:
+
+\begin{verbatim}
+========================================================================
+                          BANK MARKETING – CLI
+========================================================================
+                        Datensätze geladen: 7474
+========================================================================
+                                  MENU
+========================================================================
+1) Erfolgsquote gesamt
+2) Filter setzen (housing/loan/balance>X)
+3) Transformationen (log(balance), balance^2+1)
+4) duration Analyse + optional Buckets
+5) Group by education
+6) Group by marital
+7) Vergleich zweier Gruppen
+8) ANOVA-ähnlicher F-Wert (balance)
+q) Quit
+Auswahl: 7
+========================================================================
+                        VERGLEICH ZWEIER GRUPPEN
+========================================================================
+Gruppierungsfeld (education/marital/job) [Default: education]:
+Verfügbare Gruppen:
+primary, secondary, tertiary
+Gruppe A: secondary
+Gruppe B: tertiary
+education | count | avg(age) | avg(balance) | avg(duration) | success
+----------+-------+----------+--------------+---------------+--------
+secondary |  3815 |     40.7 |      1709.54 |         387.2 |   52.2%
+tertiary  |  2657 |     39.7 |      2404.61 |         382.4 |   62.5%
+Δ Erfolgsquote (A-B): -10.3%
+\end{verbatim}
+
+
 
 \end{document}
